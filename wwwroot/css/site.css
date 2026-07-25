@@ -1,31 +1,283 @@
-html {
-  font-size: 14px;
+/* ============================================================
+   NRL Conference Booking System — Enterprise UI
+   Colour Palette: #0b2553 (Navy) | #ffffff (White) | #f0f2f5 (BG)
+   ============================================================ */
+
+:root {
+    --nrl-navy:       #0b2553;
+    --nrl-navy-dark:  #081c3e;
+    --nrl-navy-mid:   #133070;
+    --nrl-navy-light: #1a4090;
+    --nrl-white:      #ffffff;
+    --nrl-bg:         #f0f2f5;
+    --nrl-border:     #d0d7e3;
+    --nrl-text:       #1a2a40;
+    --nrl-text-muted: #5a6a80;
+    --nrl-divider:    #c8d0dc;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
+/* ---- Base ---- */
+html { font-size: 14px; }
+@media (min-width: 768px) { html { font-size: 15px; } }
 
 body {
-  margin-bottom: 60px;
+    background-color: var(--nrl-bg);
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    color: var(--nrl-text);
+    margin-bottom: 60px;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+/* ---- Navbar ---- */
+.navbar-nrl {
+    background-color: var(--nrl-navy);
+    border-bottom: 3px solid var(--nrl-navy-light);
+    padding: 0;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.navbar-nrl .navbar-brand {
+    color: var(--nrl-white) !important;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    padding: 0.75rem 1rem;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-nrl .navbar-brand img {
+    height: 38px;
+    width: auto;
+    filter: brightness(0) invert(1);
+    background: transparent;
+}
+
+.navbar-nrl .nav-link {
+    color: rgba(255,255,255,0.85) !important;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.9rem 1rem !important;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+}
+
+.navbar-nrl .nav-link:hover,
+.navbar-nrl .nav-link.active {
+    color: var(--nrl-white) !important;
+    border-bottom-color: var(--nrl-white);
+    background-color: rgba(255,255,255,0.08);
+}
+
+.navbar-nrl .nav-link.nav-role-link {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+.navbar-nrl .nav-link.nav-role-link:hover {
+    color: var(--nrl-white) !important;
+}
+
+.navbar-nrl .dropdown-menu {
+    border: 1px solid var(--nrl-border);
+    border-top: 3px solid var(--nrl-navy);
+    border-radius: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    font-size: 0.85rem;
+}
+
+.navbar-nrl .dropdown-item:hover {
+    background-color: var(--nrl-bg);
+    color: var(--nrl-navy);
+}
+
+/* ---- Top system header bar ---- */
+.system-topbar {
+    background-color: var(--nrl-navy-dark);
+    color: rgba(255,255,255,0.65);
+    font-size: 0.72rem;
+    padding: 3px 16px;
+    letter-spacing: 0.03em;
+}
+
+/* ---- Cards ---- */
+.card-nrl {
+    border: 1px solid var(--nrl-border);
+    border-top: 3px solid var(--nrl-navy);
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    background: var(--nrl-white);
+}
+
+.card-nrl .card-header {
+    background-color: #f7f9fc;
+    border-bottom: 1px solid var(--nrl-border);
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--nrl-navy);
+    letter-spacing: 0.01em;
+}
+
+/* keep old class working */
+.card-industrial {
+    border: 1px solid var(--nrl-border);
+    border-top: 3px solid var(--nrl-navy);
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    background: var(--nrl-white);
+}
+
+.card-industrial .card-header {
+    background-color: #f7f9fc;
+    border-bottom: 1px solid var(--nrl-border);
+    font-size: 0.875rem;
+}
+
+/* ---- Buttons ---- */
+.btn-nrl-primary {
+    background-color: var(--nrl-navy);
+    color: var(--nrl-white);
+    border: 1px solid var(--nrl-navy);
+    font-weight: 600;
+    border-radius: 2px;
+    letter-spacing: 0.02em;
+    font-size: 0.85rem;
+}
+
+.btn-nrl-primary:hover {
+    background-color: var(--nrl-navy-dark);
+    color: var(--nrl-white);
+    border-color: var(--nrl-navy-dark);
+}
+
+/* Replace all yellow/amber buttons with navy */
+.btn-amber {
+    background-color: var(--nrl-navy) !important;
+    color: var(--nrl-white) !important;
+    border: 1px solid var(--nrl-navy) !important;
+    font-weight: 600 !important;
+    border-radius: 2px !important;
+    font-size: 0.85rem;
+}
+
+.btn-amber:hover {
+    background-color: var(--nrl-navy-dark) !important;
+    color: var(--nrl-white) !important;
+}
+
+/* ---- Form controls ---- */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--nrl-navy);
+    box-shadow: 0 0 0 0.15rem rgba(11, 37, 83, 0.2);
+}
+
+.form-label {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--nrl-text);
+    margin-bottom: 4px;
+}
+
+.form-control, .form-select {
+    border-radius: 2px;
+    border-color: var(--nrl-divider);
+    font-size: 0.875rem;
+}
+
+/* ---- Tables ---- */
+.table thead th {
+    background-color: var(--nrl-navy);
+    color: var(--nrl-white);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-color: var(--nrl-navy-mid);
+    padding: 0.65rem 1rem;
+}
+
+.table tbody tr:hover {
+    background-color: #eef1f7;
+}
+
+.table-light thead th {
+    background-color: #eef1f7 !important;
+    color: var(--nrl-navy) !important;
+}
+
+/* ---- Badges — replace yellow ---- */
+.badge.bg-warning { background-color: #e8ecf5 !important; color: var(--nrl-navy) !important; border: 1px solid var(--nrl-border); }
+.text-warning { color: var(--nrl-navy) !important; }
+.border-warning { border-color: var(--nrl-navy) !important; }
+.bg-warning { background-color: #e8ecf5 !important; color: var(--nrl-navy) !important; }
+
+/* ---- Status colours (keep green/red for semantic meaning) ---- */
+.badge.bg-success { background-color: #1a6e3a !important; }
+.badge.bg-danger  { background-color: #9c1a1a !important; }
+.badge.bg-info    { background-color: var(--nrl-navy-mid) !important; color: #fff !important; }
+.badge.bg-secondary { background-color: #4a5568 !important; }
+.badge.bg-dark    { background-color: var(--nrl-navy-dark) !important; }
+
+/* ---- Alerts ---- */
+.alert-info {
+    background-color: #eef2fb;
+    border-color: var(--nrl-navy-light);
+    color: var(--nrl-navy);
+}
+
+/* ---- Section headers ---- */
+.section-header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--nrl-text-muted);
+    border-bottom: 1px solid var(--nrl-divider);
+    padding-bottom: 6px;
+    margin-bottom: 1rem;
+}
+
+/* ---- Page title ---- */
+h2.page-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--nrl-navy);
+    letter-spacing: 0.01em;
+}
+
+/* ---- Footer ---- */
+.site-footer {
+    background-color: var(--nrl-navy);
+    color: rgba(255,255,255,0.55);
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    letter-spacing: 0.03em;
+    border-top: 2px solid var(--nrl-navy-light);
+}
+
+/* ---- Booking card strips ---- */
+.bkg-card-header {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.bkg-card-header:hover {
+    background-color: #f0f4fc !important;
+}
+
+/* ---- Login page ---- */
+.login-panel {
+    border-top: 4px solid var(--nrl-navy);
+    border-radius: 2px;
+}
+
+/* ---- Remove all amber/yellow inline colours from older views ---- */
+[style*="color: var(--refinery-amber)"],
+[style*="color: var(--refinery-navy)"] {
+    color: var(--nrl-navy) !important;
 }

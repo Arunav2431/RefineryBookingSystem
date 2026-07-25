@@ -1,76 +1,130 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Refinery Room Bookings</title>
-    <!-- Bootstrap 5 CSS -->
+    <meta name="description" content="NRL Conference Hall Booking System — Internal Resource Management" />
+    <title>@ViewData["Title"] — NRL Conference Booking System</title>
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <!-- FullCalendar CSS -->
+    <!-- FullCalendar -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" />
+    <!-- Site CSS -->
+    <link rel="stylesheet" href="~/css/site.css" />
     <style>
+        /* Inline overrides to purge ALL amber/yellow from existing views */
         :root {
-            --refinery-navy: #1a2942;
-            --refinery-amber: #ff9800;
-            --refinery-bg: #f4f6f9;
+            --refinery-navy:  #0b2553;
+            --refinery-amber: #0b2553;  /* redirect amber → navy everywhere */
+            --refinery-bg:    #f0f2f5;
         }
-        body { background-color: var(--refinery-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar-custom { background-color: var(--refinery-navy); border-bottom: 3px solid var(--refinery-amber); }
-        .navbar-custom .navbar-brand, .navbar-custom .nav-link { color: #ffffff !important; font-weight: 500; }
-        .navbar-custom .nav-link:hover { color: var(--refinery-amber) !important; }
-        .card-industrial { border: none; box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05); border-top: 4px solid var(--refinery-navy); }
-        .btn-amber { background-color: var(--refinery-amber); color: #000; font-weight: bold; }
-        .btn-amber:hover { background-color: #e68a00; color: #000; }
+        .text-warning  { color: #0b2553 !important; }
+        .border-warning{ border-color: #0b2553 !important; }
+        .bg-warning    { background-color: #e8ecf5 !important; color: #0b2553 !important; }
+        .btn-warning   { background-color: #0b2553 !important; color: #fff !important; border-color: #0b2553 !important; }
+        .border-top.border-warning { border-top-color: #0b2553 !important; }
+        .border-start.border-warning { border-left-color: #0b2553 !important; }
+        .border-4.border-warning { border-color: #0b2553 !important; }
     </style>
 </head>
 <body>
+
+    <!-- System top bar -->
+    <div class="system-topbar d-flex justify-content-between">
+        <span><i class="fa-solid fa-circle-dot me-1" style="color:#4a8eff;font-size:0.6rem;"></i> NRL INTERNAL SYSTEM &nbsp;|&nbsp; CONFERENCE BOOKING MODULE</span>
+        <span>@DateTime.Now.ToString("dddd, dd MMM yyyy")</span>
+    </div>
+
     <header>
-        <nav class="navbar navbar-expand-lg navbar-custom navbar-dark py-3">
-            <div class="container-fluid px-4">
-                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
-                    <i class="fa-solid fa-oil-well text-warning me-2 fs-4"></i>
-                    <span>REFINERY<strong class="text-warning">BOOKING</strong></span>
+        <nav class="navbar navbar-expand-lg navbar-nrl">
+            <div class="container-fluid px-0">
+
+                <!-- Brand / Logo -->
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/nrl-og-logo.png" alt="NRL Logo" />
+                    <span class="d-none d-md-inline" style="font-size:0.82rem;line-height:1.2;">
+                        Conference<br /><strong style="font-size:0.95rem;letter-spacing:0.04em;">Booking System</strong>
+                    </span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                    <span class="navbar-toggler-icon"></span>
+
+                <button class="navbar-toggler border-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                    <i class="fa-solid fa-bars text-white"></i>
                 </button>
+
                 <div class="collapse navbar-collapse" id="navbarContent">
                     @if (User.Identity!.IsAuthenticated)
                     {
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-gauge me-1"></i> Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Calendar"><i class="fa-solid fa-calendar-days me-1"></i> Grid View</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Create"><i class="fa-solid fa-plus-circle me-1"></i> Book Room</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Index"><i class="fa-solid fa-list me-1"></i> My Bookings</a></li>
+                        <ul class="navbar-nav me-auto mb-0">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                    <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Booking" asp-action="Create">
+                                    <i class="fa-solid fa-calendar-plus me-1"></i> New Booking
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Booking" asp-action="Index">
+                                    <i class="fa-solid fa-list-check me-1"></i> My Bookings
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Booking" asp-action="Calendar">
+                                    <i class="fa-solid fa-calendar-days me-1"></i> Room Calendar
+                                </a>
+                            </li>
 
                             @if (User.IsInRole("Allocator") || User.IsInRole("Admin"))
                             {
-                                <li class="nav-item"><a class="nav-link text-warning" asp-controller="Allocator" asp-action="Index"><i class="fa-solid fa-clipboard-check me-1"></i> Allocator Desk</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link nav-role-link" asp-controller="Allocator" asp-action="Index">
+                                        <i class="fa-solid fa-clipboard-check me-1"></i> Allocator Desk
+                                    </a>
+                                </li>
                             }
                             @if (User.IsInRole("ITFM") || User.IsInRole("Admin"))
                             {
-                                <li class="nav-item"><a class="nav-link text-info" asp-controller="ITFM" asp-action="Index"><i class="fa-solid fa-headset me-1"></i> IT/Facilities Desk</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link nav-role-link" asp-controller="ITFM" asp-action="Index">
+                                        <i class="fa-solid fa-toolbox me-1"></i> IT/Facilities Desk
+                                    </a>
+                                </li>
                             }
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-danger" href="#" role="button" data-bs-toggle="dropdown"><i class="fa-solid fa-gear me-1"></i> Admin</a>
+                                    <a class="nav-link nav-role-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fa-solid fa-user-shield me-1"></i> Admin
+                                    </a>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#">Master Rooms</a></li>
-                                        <li><a class="dropdown-item" href="#">User Roles</a></li>
-                                        <li><a class="dropdown-item" href="#">System Audit Logs</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-door-open me-2"></i>Master Rooms</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-users me-2"></i>User Roles</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-shield-halved me-2"></i>System Audit Logs</a></li>
                                     </ul>
                                 </li>
                             }
-                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Helpdesk"><i class="fa-solid fa-life-ring me-1"></i> Safety & Support</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-role-link" asp-controller="Home" asp-action="Helpdesk">
+                                    <i class="fa-solid fa-life-ring me-1"></i> Helpdesk
+                                </a>
+                            </li>
                         </ul>
-                        <div class="d-flex align-items-center text-light">
-                            <span class="me-3 small"><i class="fa-solid fa-user-shield text-warning me-1"></i> @User.Identity.Name</span>
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+
+                        <!-- Right side: user info + logout -->
+                        <div class="d-flex align-items-center pe-3 border-start border-white border-opacity-25 ms-2">
+                            <div class="text-center px-3" style="border-right:1px solid rgba(255,255,255,0.2);">
+                                <div style="font-size:0.7rem;color:rgba(255,255,255,0.55);letter-spacing:0.04em;">SIGNED IN AS</div>
+                                <div style="font-size:0.82rem;color:#fff;font-weight:600;">@User.Identity.Name</div>
+                            </div>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline ms-3">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                                <button type="submit" class="btn btn-sm btn-outline-light" style="font-size:0.78rem;border-radius:2px;">
+                                    <i class="fa-solid fa-right-from-bracket me-1"></i> Sign Out
+                                </button>
                             </form>
                         </div>
                     }
@@ -82,14 +136,14 @@
     <div class="container-fluid px-4 my-4">
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius:2px;border-left:4px solid #1a6e3a;">
                 <i class="fa-solid fa-check-circle me-2"></i> @TempData["SuccessMessage"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius:2px;border-left:4px solid #9c1a1a;">
                 <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["ErrorMessage"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -99,7 +153,14 @@
         </main>
     </div>
 
-    <!-- JS Scripts -->
+    <!-- Footer -->
+    <footer class="site-footer">
+        <img src="~/images/nrl-og-logo.png" alt="NRL" style="height:16px;filter:brightness(0) invert(1);opacity:0.6;vertical-align:middle;margin-right:8px;" />
+        NRL Conference Booking System &nbsp;|&nbsp; Numaligarh Refinery Limited &nbsp;|&nbsp; For Internal Use Only
+        &nbsp;&nbsp;|&nbsp;&nbsp; &copy; @DateTime.Now.Year
+    </footer>
+
+    <!-- JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
