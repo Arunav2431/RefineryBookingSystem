@@ -24,6 +24,7 @@ namespace RefineryBooking.Data
         public DbSet<Booking> Bookings { get; set; } = null!;
         public DbSet<ITFacilityRequirement> ITFacilityRequirements { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<HallBlock> HallBlocks { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -39,6 +40,20 @@ namespace RefineryBooking.Data
                 .WithOne(i => i.Booking)
                 .HasForeignKey<ITFacilityRequirement>(i => i.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // HallBlock → ConferenceRoom
+            builder.Entity<HallBlock>()
+                .HasOne(h => h.ConferenceRoom)
+                .WithMany()
+                .HasForeignKey(h => h.ConferenceRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // HallBlock → CreatedBy (no cascade to avoid multiple cascade paths)
+            builder.Entity<HallBlock>()
+                .HasOne(h => h.CreatedBy)
+                .WithMany()
+                .HasForeignKey(h => h.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // --- SEED ROLES ---
             var adminRoleId = "11111111-1111-1111-1111-111111111111";

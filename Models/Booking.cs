@@ -44,6 +44,19 @@ namespace RefineryBooking.Models
         [StringLength(1000)]
         public string? Remarks { get; set; }
 
+        // ── Help Requests (optional, user-declared) ──────────────────────────
+        /// <summary>User flagged they need AV/IT/equipment help from ITFM.</summary>
+        public bool RequiresITFMHelp { get; set; }
+
+        [StringLength(500)]
+        public string? ITFMHelpDetails { get; set; }
+
+        /// <summary>User flagged they need scheduling/room help from Allocator.</summary>
+        public bool RequiresAllocatorHelp { get; set; }
+
+        [StringLength(500)]
+        public string? AllocatorHelpDetails { get; set; }
+
         [StringLength(300)]
         public string? AttachmentPath { get; set; }
 

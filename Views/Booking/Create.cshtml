@@ -189,6 +189,59 @@
                         </div>
                     </div>
 
+                    <!-- ===== SECTION 5: HELP REQUIRED (Optional) ===== -->
+                    <hr class="my-4" />
+                    <h6 class="fw-bold mb-3 text-uppercase small" style="color:var(--nrl-navy);">
+                        <i class="fa-solid fa-hands-helping me-2"></i>Support Required <span class="text-muted fw-normal normal-case small ms-1">(Optional)</span>
+                    </h6>
+                    <p class="text-muted small mb-3">If you need assistance from either the IT/Facilities team or the Allocator, indicate it here so they are notified.</p>
+
+                    <div class="row g-3 mb-4">
+                        <!-- ITFM Help -->
+                        <div class="col-md-6">
+                            <div class="card border" style="border-radius:2px;">
+                                <div class="card-body py-3 px-3">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="chkITFM"
+                                               name="RequiresITFMHelp" value="true"
+                                               onchange="toggleHelp('itfmHelp', this.checked)" />
+                                        <label class="form-check-label fw-bold" for="chkITFM">
+                                            <i class="fa-solid fa-toolbox me-1" style="color:var(--nrl-navy);"></i>
+                                            Request IT/Facilities Help
+                                        </label>
+                                    </div>
+                                    <p class="text-muted small mb-2">AV setup, projector, microphones, VC, PA system, etc.</p>
+                                    <div id="itfmHelp" class="d-none">
+                                        <textarea name="ITFMHelpDetails" class="form-control form-control-sm" rows="2"
+                                                  placeholder="Describe what you need, e.g., 'VC setup with 2 mics, whiteboard markers'"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Allocator Help -->
+                        <div class="col-md-6">
+                            <div class="card border" style="border-radius:2px;">
+                                <div class="card-body py-3 px-3">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="chkAllocator"
+                                               name="RequiresAllocatorHelp" value="true"
+                                               onchange="toggleHelp('allocatorHelp', this.checked)" />
+                                        <label class="form-check-label fw-bold" for="chkAllocator">
+                                            <i class="fa-solid fa-clipboard-check me-1" style="color:var(--nrl-navy);"></i>
+                                            Request Allocator Assistance
+                                        </label>
+                                    </div>
+                                    <p class="text-muted small mb-2">Room query, schedule conflict, special arrangement, etc.</p>
+                                    <div id="allocatorHelp" class="d-none">
+                                        <textarea name="AllocatorHelpDetails" class="form-control form-control-sm" rows="2"
+                                                  placeholder="Describe what you need, e.g., 'Flexible on timing, need largest available room'"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- ACTIONS -->
                     <div class="d-flex justify-content-end gap-2 mt-2">
                         <a asp-action="Index" class="btn btn-outline-secondary">
@@ -269,5 +322,11 @@
             $('.time-input, #roomSelect').on('change', checkAvailability);
             $('#btnCheckConflict').click(checkAvailability);
         });
+
+        function toggleHelp(divId, show) {
+            var el = document.getElementById(divId);
+            if (show) { el.classList.remove('d-none'); }
+            else       { el.classList.add('d-none'); el.querySelector('textarea').value = ''; }
+        }
     </script>
 }

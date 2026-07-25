@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Block Conference Hall";
+    var rooms = ViewBag.Rooms as List<RefineryBooking.Models.ConferenceRoom> ?? new();
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card card-industrial">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold" style="color:var(--nrl-navy);">
+                    <i class="fa-solid fa-ban text-danger me-2"></i>Block Hall for Date
+                </h5>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+            <div class="card-body p-4">
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger py-2 small mb-3">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>@TempData["ErrorMessage"]
+                    </div>
+                }
+
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Conference Hall *</label>
+                        <select name="conferenceRoomId" class="form-select" required>
+                            <option value="">Select Hall...</option>
+                            @foreach (var r in rooms)
+                            {
+                                <option value="@r.Id">@r.Name (@r.BuildingLocation)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Date to Block *</label>
+                        <input type="date" name="blockedDate" class="form-control"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Reason for Block *</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="Safety">Safety — Mandatory Safety Inspection / HAZMAT Audit</option>
+                            <option value="Maintenance">Maintenance — AV Upgrade / Air Conditioning Repair / Painting</option>
+                            <option value="Other">Other — Executive Event / Internal Reservation</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Notes / Description</label>
+                        <textarea name="notes" class="form-control" rows="3"
+                                  placeholder="e.g. Annual HVAC maintenance service. Room unavailable all day."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger fw-bold px-4">
+                            <i class="fa-solid fa-lock me-1"></i>Block Hall
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

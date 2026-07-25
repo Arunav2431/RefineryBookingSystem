@@ -1,0 +1,210 @@
+@model RefineryBooking.Models.Booking
+@{
+    ViewData["Title"] = $"Booking Details — BKG-{Model.Id}";
+    var hasConflict = ViewBag.HasConflict as bool? ?? false;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-0" style="color:var(--nrl-navy);">
+            <i class="fa-solid fa-file-lines me-2"></i>Booking Details — <span class="font-monospace">BKG-@Model.Id</span>
+        </h4>
+        <p class="text-muted small mb-0">Full request parameters and equipment allocation.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>Back to Desk
+    </a>
+</div>
+
+@if (hasConflict)
+{
+    <div class="alert alert-danger mb-4 py-3" role="alert" style="border-radius:2px;">
+        <i class="fa-solid fa-triangle-exclamation fa-lg me-2"></i>
+        <strong>Time Slot Conflict Detected!</strong> Another approved meeting overlaps with this time slot. Approval is disabled.
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Left Column: Details -->
+    <div class="col-md-7">
+        <div class="card card-industrial mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0" style="color:var(--nrl-navy);">
+                    <i class="fa-solid fa-info-circle me-2"></i>Meeting Information
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td class="fw-semibold text-muted" style="width:35%;">Booking Ref</td>
+                        <td><span class="badge bg-dark font-monospace px-3 py-2">BKG-@Model.Id</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Meeting Title</td>
+                        <td><strong class="fs-6">@Model.MeetingTitle</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Organizer</td>
+                        <td>@Model.OrganizerName <span class="badge bg-light text-dark border ms-1">@Model.User?.Email</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Department</td>
+                        <td>@Model.Department</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Cost Centre</td>
+                        <td><span class="badge bg-light text-dark border">@Model.CostCentre</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Conference Hall</td>
+                        <td>
+                            <strong>@Model.ConferenceRoom?.Name</strong>
+                            <small class="text-muted d-block">@Model.ConferenceRoom?.BuildingLocation</small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Date & Time</td>
+                        <td>
+                            <strong>@Model.StartTime.ToString("dddd, dd MMMM yyyy")</strong><br />
+                            <span class="text-muted">@Model.StartTime.ToString("HH:mm") – @Model.EndTime.ToString("HH:mm")</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Attendees</td>
+                        <td><i class="fa-solid fa-users me-1 text-muted"></i>@Model.ExpectedAttendees people</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Current Status</td>
+                        <td>
+                            @switch (Model.Status)
+                            {
+                                case RefineryBooking.Models.BookingStatus.Approved:
+                                    <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Approved</span>
+                                    break;
+                                case RefineryBooking.Models.BookingStatus.Rejected:
+                                    <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i>Rejected</span>
+                                    break;
+                                case RefineryBooking.Models.BookingStatus.Cancelled:
+                                    <span class="badge bg-secondary"><i class="fa-solid fa-ban me-1"></i>Cancelled</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Pending Review</span>
+                                    break;
+                            }
+                        </td>
+                    </tr>
+                    @if (!string.IsNullOrWhiteSpace(Model.Remarks))
+                    {
+                        <tr>
+                            <td class="fw-semibold text-muted">Remarks</td>
+                            <td><em>@Model.Remarks</em></td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.AttachmentPath))
+                    {
+                        <tr>
+                            <td class="fw-semibold text-muted">Attachment</td>
+                            <td>
+                                <a href="@Model.AttachmentPath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa-solid fa-paperclip me-1"></i>View Attachment File
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Support & Actions -->
+    <div class="col-md-5">
+        <!-- Support Requests Card -->
+        <div class="card card-industrial mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0" style="color:var(--nrl-navy);">
+                    <i class="fa-solid fa-hands-helping me-2"></i>Special Help & Equipment
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                @if (Model.RequiresAllocatorHelp)
+                {
+                    <div class="alert alert-primary py-2 mb-3 small">
+                        <strong class="d-block mb-1"><i class="fa-solid fa-clipboard-check me-1"></i>Allocator Assistance Requested:</strong>
+                        @(Model.AllocatorHelpDetails ?? "User requested room/scheduling support.")
+                    </div>
+                }
+                @if (Model.RequiresITFMHelp)
+                {
+                    <div class="alert alert-info py-2 mb-3 small">
+                        <strong class="d-block mb-1"><i class="fa-solid fa-toolbox me-1"></i>ITFM Support Requested:</strong>
+                        @(Model.ITFMHelpDetails ?? "User requested AV/IT assistance.")
+                    </div>
+                }
+
+                <h6 class="fw-bold text-uppercase small text-muted mb-2">Requested Equipment Flags</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    @if (Model.RequiresCatering) { <span class="badge bg-warning text-dark"><i class="fa-solid fa-mug-hot me-1"></i>Refreshments</span> }
+                    @if (Model.ITRequirement?.NeedsVideoConferencing == true) { <span class="badge bg-info text-white"><i class="fa-solid fa-video me-1"></i>Video Conf</span> }
+                    @if (Model.ITRequirement?.NeedsProjector == true) { <span class="badge bg-primary"><i class="fa-solid fa-projector me-1"></i>Projector</span> }
+                    @if (Model.ITRequirement?.NeedsWhiteboard == true) { <span class="badge bg-success"><i class="fa-solid fa-chalkboard me-1"></i>Whiteboard</span> }
+                    @if (Model.ITRequirement?.NeedsPASystem == true) { <span class="badge bg-danger"><i class="fa-solid fa-tower-broadcast me-1"></i>PA System</span> }
+                    @if (Model.ITRequirement?.NeedsLaptop == true) { <span class="badge bg-secondary"><i class="fa-solid fa-laptop me-1"></i>Laptop</span> }
+                    @if (Model.ITRequirement?.NeedsLaserPointer == true) { <span class="badge bg-dark"><i class="fa-solid fa-computer-mouse me-1"></i>Laser Pointer</span> }
+                    @if (Model.ITRequirement?.MicCount > 0) { <span class="badge bg-dark"><i class="fa-solid fa-microphone me-1"></i>@Model.ITRequirement.MicCount Mics</span> }
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Card -->
+        @if (Model.Status == RefineryBooking.Models.BookingStatus.Pending || Model.Status == RefineryBooking.Models.BookingStatus.PendingAllocatorReview)
+        {
+            <div class="card card-industrial">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0" style="color:var(--nrl-navy);">
+                        <i class="fa-solid fa-gavel me-2"></i>Allocator Action
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-grid gap-2">
+                        <form asp-action="Approve" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success w-100 fw-bold py-2" disabled="@hasConflict">
+                                <i class="fa-solid fa-check me-2"></i>Approve Booking
+                            </button>
+                        </form>
+
+                        <button type="button" class="btn btn-outline-danger w-100 fw-bold py-2"
+                                data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="fa-solid fa-xmark me-2"></i>Reject Booking
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reject Modal -->
+            <div class="modal fade" id="rejectModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <form asp-action="Reject" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h6 class="modal-title">Reject BKG-@Model.Id</h6>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <label class="form-label fw-bold">Rejection Reason *</label>
+                                <textarea name="reason" class="form-control" rows="3" required placeholder="State reason..."></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger fw-bold">Confirm Rejection</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

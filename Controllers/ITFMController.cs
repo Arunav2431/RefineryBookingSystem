@@ -13,22 +13,56 @@ namespace RefineryBooking.Controllers
         private readonly ApplicationDbContext _context;
         public ITFMController(ApplicationDbContext context) => _context = context;
 
-        public async Task<IActionResult> Index()
+        // ── INDEX: All approved upcoming bookings that have IT requirements
+        //           OR explicitly requested ITFM help ─────────────────────────
+        public async Task<IActionResult> Index(string tab = "setup")
         {
-            var requirements = await _context.ITFacilityRequirements
-                .Include(i => i.Booking)
-                    .ThenInclude(b => b!.ConferenceRoom)
-                .Include(i => i.Booking)
-                    .ThenInclude(b => b!.User)
-                .Where(i => i.Booking!.Status == BookingStatus.Approved && i.Booking.EndTime >= DateTime.Now)
-                .OrderBy(i => i.Booking!.StartTime)
-                .ToListAsync();
+            ViewBag.ActiveTab = tab;
 
-            return View(requirements);
+            // Bookings requesting ITFM help OR with IT facility requirements
+            var baseQuery = _context.Bookings
+                .Include(b => b.ConferenceRoom)
+                .Include(b => b.User)
+                .Include(b => b.ITRequirement)
+                .AsQueryable();
+
+            IQueryable<Booking> filtered = tab switch
+            {
+                "helpdesk" => baseQuery.Where(b =>
+                    b.RequiresITFMHelp &&
+                    (b.Status == BookingStatus.Pending || b.Status == BookingStatus.PendingAllocatorReview || b.Status == BookingStatus.Approved)),
+                _ => baseQuery.Where(b =>
+                    b.Status == BookingStatus.Approved &&
+                    b.EndTime >= DateTime.Now &&
+                    b.ITRequirement != null)
+            };
+
+            var bookings = await filtered.OrderBy(b => b.StartTime).ToListAsync();
+
+            ViewBag.CountSetup    = await _context.Bookings.CountAsync(b =>
+                b.Status == BookingStatus.Approved && b.EndTime >= DateTime.Now && b.ITRequirement != null);
+            ViewBag.CountHelpdesk = await _context.Bookings.CountAsync(b =>
+                b.RequiresITFMHelp &&
+                (b.Status == BookingStatus.Pending || b.Status == BookingStatus.PendingAllocatorReview || b.Status == BookingStatus.Approved));
+
+            return View(bookings);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // ── DETAILS: Full booking details + all equipment ────────────────────
+        public async Task<IActionResult> Details(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.ConferenceRoom)
+                .Include(b => b.User)
+                .Include(b => b.ITRequirement)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (booking == null) return NotFound();
+            return View(booking);
+        }
+
+        // ── UPDATE IT SETUP STATUS ───────────────────────────────────────────
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, TechSetupStatus status)
         {
             var req = await _context.ITFacilityRequirements.FindAsync(id);
@@ -37,8 +71,22 @@ namespace RefineryBooking.Controllers
             req.SetupStatus = status;
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"AV/IT Setup status updated to {status}.";
+            TempData["SuccessMessage"] = $"Setup status updated to: {status}.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ── ADD TECH NOTE ────────────────────────────────────────────────────
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddNote(int itReqId, string note)
+        {
+            var req = await _context.ITFacilityRequirements.FindAsync(itReqId);
+            if (req == null) return NotFound();
+
+            req.TechNotes = note;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Technical note saved.";
+            return RedirectToAction(nameof(Details), new { id = req.BookingId });
         }
     }
 }

@@ -169,6 +169,18 @@ namespace RefineryBooking.Controllers
                 ModelState.AddModelError("", "CRITICAL CONFLICT: This room is already booked for the selected timeframe. Please select another slot.");
             }
 
+            // 5b. Hall Block Check
+            var hallBlock = await _context.HallBlocks
+                .Include(h => h.ConferenceRoom)
+                .FirstOrDefaultAsync(h =>
+                    h.ConferenceRoomId == booking.ConferenceRoomId &&
+                    h.BlockedDate.Date == booking.StartTime.Date);
+
+            if (hallBlock != null)
+            {
+                ModelState.AddModelError("", $"'{hallBlock.ConferenceRoom?.Name}' is unavailable on {hallBlock.BlockedDate:dd MMM yyyy} due to: {hallBlock.Reason} — {hallBlock.Notes}");
+            }
+
             // 6. Handle file attachment upload
             if (attachment != null && attachment.Length > 0)
             {
@@ -286,6 +298,80 @@ namespace RefineryBooking.Controllers
             }).ToListAsync();
 
             return Json(events);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDaySlots(int roomId, string date)
+        {
+            if (!DateTime.TryParse(date, out var day)) return Json(new { error = "Invalid date" });
+
+            // Check hall block
+            var block = await _context.HallBlocks
+                .Include(h => h.ConferenceRoom)
+                .FirstOrDefaultAsync(h => h.ConferenceRoomId == roomId && h.BlockedDate.Date == day.Date);
+
+            var room = await _context.ConferenceRooms.FindAsync(roomId);
+
+            // Get bookings for this room on this day
+            var dayStart = day.Date.AddHours(8);
+            var dayEnd = day.Date.AddHours(18);
+
+            var bookings = await _context.Bookings
+                .Where(b => b.ConferenceRoomId == roomId &&
+                            b.Status != BookingStatus.Rejected &&
+                            b.Status != BookingStatus.Cancelled &&
+                            b.StartTime < dayEnd && b.EndTime > dayStart)
+                .ToListAsync();
+
+            var slots = new List<object>();
+            for (int h = 8; h < 18; h++)
+            {
+                var slotStart = day.Date.AddHours(h);
+                var slotEnd = slotStart.AddHours(1);
+
+                if (block != null)
+                {
+                    slots.Add(new {
+                        hour = $"{h:D2}:00 – {h+1:D2}:00",
+                        status = "Blocked",
+                        details = $"Blocked: {block.Reason} ({block.Notes})",
+                        isAvailable = false
+                    });
+                }
+                else
+                {
+                    var match = bookings.FirstOrDefault(b => slotStart < b.EndTime && slotEnd > b.StartTime);
+                    if (match != null)
+                    {
+                        slots.Add(new {
+                            hour = $"{h:D2}:00 – {h+1:D2}:00",
+                            status = match.Status == BookingStatus.Approved ? "Approved" : "Pending",
+                            details = $"{match.MeetingTitle} ({match.OrganizerName})",
+                            bookingId = match.Id,
+                            isAvailable = false
+                        });
+                    }
+                    else
+                    {
+                        slots.Add(new {
+                            hour = $"{h:D2}:00 – {h+1:D2}:00",
+                            status = "Available",
+                            details = "Free Slot",
+                            isAvailable = true,
+                            slotStartStr = slotStart.ToString("yyyy-MM-ddTHH:mm")
+                        });
+                    }
+                }
+            }
+
+            return Json(new {
+                roomName = room?.Name ?? "Conference Hall",
+                dateStr = day.ToString("dd MMMM yyyy"),
+                isBlocked = block != null,
+                blockReason = block?.Reason.ToString(),
+                blockNotes = block?.Notes,
+                slots
+            });
         }
     }
 }

@@ -1,31 +1,76 @@
 @model IEnumerable<RefineryBooking.Models.Booking>
 @{
-    ViewData["Title"] = "Allocator Approval Queue";
+    ViewData["Title"] = "Allocator Desk";
+    var activeTab = ViewBag.ActiveTab as string ?? "review";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h2 class="fw-bold mb-0" style="color: var(--refinery-navy);">
-            <i class="fa-solid fa-clipboard-check text-warning me-2"></i> Allocator Action Desk
-        </h2>
-        <p class="text-muted mb-0">Click any booking card to view full details before approving or rejecting.</p>
+        <h4 class="fw-bold mb-0" style="color:var(--nrl-navy);">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Allocator Desk
+        </h4>
+        <p class="text-muted small mb-0">Manage and action conference room booking requests.</p>
     </div>
-    <span class="badge bg-warning text-dark fs-6 px-3 py-2">
-        <i class="fa-solid fa-hourglass-half me-1"></i> @Model.Count() Pending
-    </span>
+    <div class="d-flex gap-2">
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Export" asp-route-tab="@activeTab" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-file-excel me-1"></i>Export to Excel
+            </a>
+        }
+    </div>
 </div>
+
+<!-- TABS -->
+<ul class="nav nav-tabs border-bottom mb-4" style="border-color:var(--nrl-border)!important;">
+    <li class="nav-item">
+        <a class="nav-link @(activeTab=="review"?"active fw-bold":"")"
+           asp-action="Index" asp-route-tab="review" style="font-size:0.85rem;">
+            <i class="fa-solid fa-inbox me-1"></i>For Review
+            @if ((int)ViewBag.CountReview > 0)
+            {
+                <span class="badge ms-1" style="background:var(--nrl-navy);color:#fff;">@ViewBag.CountReview</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab=="pending"?"active fw-bold":"")"
+           asp-action="Index" asp-route-tab="pending" style="font-size:0.85rem;">
+            Pending <span class="badge bg-secondary ms-1">@ViewBag.CountPending</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab=="approved"?"active fw-bold":"")"
+           asp-action="Index" asp-route-tab="approved" style="font-size:0.85rem;">
+            Approved <span class="badge bg-success ms-1">@ViewBag.CountApproved</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab=="rejected"?"active fw-bold":"")"
+           asp-action="Index" asp-route-tab="rejected" style="font-size:0.85rem;">
+            Rejected <span class="badge bg-danger ms-1">@ViewBag.CountRejected</span>
+        </a>
+    </li>
+    @if (User.IsInRole("Admin"))
+    {
+        <li class="nav-item">
+            <a class="nav-link @(activeTab=="all"?"active fw-bold":"")"
+               asp-action="Index" asp-route-tab="all" style="font-size:0.85rem;">All Bookings</a>
+        </li>
+    }
+</ul>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fa-solid fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+    <div class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
+        <i class="fa-solid fa-check-circle me-2"></i>@TempData["SuccessMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["ErrorMessage"]
+    <div class="alert alert-danger alert-dismissible fade show py-2 small" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
@@ -34,215 +79,180 @@
 {
     <div class="card card-industrial text-center py-5">
         <div class="card-body">
-            <i class="fa-solid fa-check-double fa-3x text-success mb-3"></i>
-            <h5 class="fw-bold text-muted">All Clear — No Pending Requests</h5>
-            <p class="text-muted">All booking requests have been processed.</p>
+            <i class="fa-solid fa-check-double fa-2x mb-3 text-muted"></i>
+            <p class="text-muted mb-0">No bookings in this category.</p>
         </div>
     </div>
 }
 else
 {
-    <div class="d-flex flex-column gap-3">
+    <div class="d-flex flex-column gap-2">
         @foreach (var item in Model)
         {
-            <div class="card card-industrial shadow-sm border-start border-warning border-4" id="card-@item.Id">
+            var borderCol = item.Status == RefineryBooking.Models.BookingStatus.Approved ? "border-success"
+                          : item.Status == RefineryBooking.Models.BookingStatus.Rejected  ? "border-danger"
+                          : item.Status == RefineryBooking.Models.BookingStatus.Cancelled ? "border-secondary"
+                          : "border-primary";
 
-                <!-- COMPACT HEADER (always visible) — click to expand -->
-                <div class="card-header bg-white py-3 d-flex align-items-center gap-3"
-                     style="cursor:pointer;" onclick="toggleCard(@item.Id)" id="header-@item.Id">
-                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                        <span class="badge bg-dark px-3 py-2 fs-7 font-monospace">BKG-@item.Id</span>
-                        <span class="badge bg-warning text-dark px-2 py-2">
-                            <i class="fa-solid fa-hourglass-half me-1"></i> Pending
-                        </span>
+            var statusLabel = item.Status switch {
+                RefineryBooking.Models.BookingStatus.Approved               => "Approved",
+                RefineryBooking.Models.BookingStatus.Rejected               => "Rejected",
+                RefineryBooking.Models.BookingStatus.Cancelled              => "Cancelled",
+                RefineryBooking.Models.BookingStatus.PendingAllocatorReview => "Awaiting Review",
+                _ => "Pending"
+            };
+            var statusBg = item.Status switch {
+                RefineryBooking.Models.BookingStatus.Approved               => "bg-success",
+                RefineryBooking.Models.BookingStatus.Rejected               => "bg-danger",
+                RefineryBooking.Models.BookingStatus.Cancelled              => "bg-secondary",
+                RefineryBooking.Models.BookingStatus.PendingAllocatorReview => "bg-primary",
+                _ => "bg-warning text-dark"
+            };
+
+            <div class="card card-industrial shadow-sm border-start border-4 @borderCol">
+                <div class="card-header bg-white py-2 d-flex align-items-center gap-3 bkg-card-header"
+                     onclick="toggleAllocCard(@item.Id)">
+                    <span class="badge bg-dark font-monospace px-2 py-1">BKG-@item.Id</span>
+                    <span class="badge @statusBg px-2 py-1 small">@statusLabel</span>
+                    <div class="flex-grow-1 small">
+                        <strong>@item.MeetingTitle</strong>
+                        <span class="text-muted ms-2">@item.Department</span>
+                        @if (item.RequiresAllocatorHelp)
+                        {
+                            <span class="badge ms-2" style="background:#cce5ff;color:#003d7a;border:1px solid #99caff;">
+                                <i class="fa-solid fa-circle-question me-1"></i>Allocator Help Requested
+                            </span>
+                        }
+                        @if (item.RequiresITFMHelp)
+                        {
+                            <span class="badge ms-1" style="background:#d4edda;color:#155724;border:1px solid #b8dacc;">
+                                <i class="fa-solid fa-toolbox me-1"></i>ITFM Help Requested
+                            </span>
+                        }
                     </div>
-                    <div class="flex-grow-1 ms-2">
-                        <strong class="text-dark">@item.MeetingTitle</strong>
-                        <span class="text-muted small ms-2">— @item.Department</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                        <span class="small text-muted">
-                            <i class="fa-solid fa-door-closed me-1"></i>@item.ConferenceRoom?.Name
-                        </span>
-                        <span class="small text-muted">
-                            <i class="fa-solid fa-clock me-1"></i>@item.StartTime.ToString("MMM dd, HH:mm") – @item.EndTime.ToString("HH:mm")
-                        </span>
-                        <i class="fa-solid fa-chevron-down text-muted toggle-icon-@item.Id" style="transition:transform 0.2s;"></i>
+                    <div class="d-flex gap-3 align-items-center flex-shrink-0 text-muted small">
+                        <span><i class="fa-solid fa-door-closed me-1"></i>@item.ConferenceRoom?.Name</span>
+                        <span><i class="fa-solid fa-clock me-1"></i>@item.StartTime.ToString("dd MMM, HH:mm")–@item.EndTime.ToString("HH:mm")</span>
+                        <a asp-action="Details" asp-route-id="@item.Id"
+                           class="btn btn-sm btn-outline-primary" style="font-size:0.75rem;border-radius:2px;"
+                           onclick="event.stopPropagation()">
+                            <i class="fa-solid fa-eye me-1"></i>Details
+                        </a>
+                        <i class="fa-solid fa-chevron-down toggle-alloc-icon-@item.Id" style="transition:transform 0.2s;"></i>
                     </div>
                 </div>
 
-                <!-- EXPANDED DETAILS (hidden by default) -->
-                <div id="details-@item.Id" class="collapse">
-                    <div class="card-body p-4">
-                        <div class="row g-4">
-
-                            <!-- Left column: booking details -->
-                            <div class="col-md-7">
-                                <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                    <i class="fa-solid fa-circle-info me-1"></i> Booking Details
-                                </h6>
-                                <table class="table table-sm table-borderless">
-                                    <tr>
-                                        <td class="fw-semibold text-muted" style="width:40%">Booking ID</td>
-                                        <td><span class="font-monospace fw-bold">BKG-@item.Id</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Meeting Purpose</td>
-                                        <td><strong>@item.MeetingTitle</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Organizer</td>
-                                        <td>@item.OrganizerName <span class="badge bg-light text-dark border ms-1">@item.User?.Email</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Department</td>
-                                        <td>@item.Department</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Cost Centre</td>
-                                        <td>@item.CostCentre</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Conference Hall</td>
-                                        <td>
-                                            <span class="badge bg-secondary">@item.ConferenceRoom?.Name</span>
-                                            <small class="text-muted ms-1">@item.ConferenceRoom?.BuildingLocation</small>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Date & Time</td>
-                                        <td>
-                                            <strong>@item.StartTime.ToString("dddd, dd MMM yyyy")</strong><br />
-                                            <span class="text-muted">@item.StartTime.ToString("HH:mm") – @item.EndTime.ToString("HH:mm")</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Participants</td>
-                                        <td><i class="fa-solid fa-users me-1 text-muted"></i> @item.ExpectedAttendees people</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-semibold text-muted">Submitted</td>
-                                        <td class="small text-muted">@item.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</td>
-                                    </tr>
-                                    @if (!string.IsNullOrWhiteSpace(item.Remarks))
-                                    {
-                                        <tr>
-                                            <td class="fw-semibold text-muted">Remarks</td>
-                                            <td><em class="small">@item.Remarks</em></td>
-                                        </tr>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(item.AttachmentPath))
-                                    {
-                                        <tr>
-                                            <td class="fw-semibold text-muted">Attachment</td>
-                                            <td>
-                                                <a href="@item.AttachmentPath" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fa-solid fa-paperclip me-1"></i> View Attachment
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </table>
-                            </div>
-
-                            <!-- Right column: equipment + actions -->
-                            <div class="col-md-5">
-                                <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                    <i class="fa-solid fa-plug me-1"></i> Equipment & Requirements
-                                </h6>
-                                <div class="d-flex flex-wrap gap-2 mb-4">
-                                    @if (item.RequiresCatering) { <span class="badge bg-warning text-dark"><i class="fa-solid fa-mug-hot me-1"></i> Refreshments</span> }
-                                    @if (item.ITRequirement?.NeedsVideoConferencing == true) { <span class="badge bg-info text-white"><i class="fa-solid fa-video me-1"></i> Video Conf</span> }
-                                    @if (item.ITRequirement?.NeedsProjector == true) { <span class="badge bg-primary"><i class="fa-solid fa-projector me-1"></i> Projector</span> }
-                                    @if (item.ITRequirement?.NeedsWhiteboard == true) { <span class="badge bg-success"><i class="fa-solid fa-chalkboard me-1"></i> Whiteboard</span> }
-                                    @if (item.ITRequirement?.NeedsPASystem == true) { <span class="badge bg-danger"><i class="fa-solid fa-tower-broadcast me-1"></i> PA System</span> }
-                                    @if (item.ITRequirement?.NeedsLaptop == true) { <span class="badge bg-secondary"><i class="fa-solid fa-laptop me-1"></i> Laptop</span> }
-                                    @if (item.ITRequirement?.NeedsLaserPointer == true) { <span class="badge bg-dark"><i class="fa-solid fa-computer-mouse me-1"></i> Laser Pointer</span> }
-                                    @if (item.ITRequirement?.MicCount > 0) { <span class="badge bg-dark"><i class="fa-solid fa-microphone me-1"></i> @item.ITRequirement.MicCount Mics</span> }
-                                    @if (!item.RequiresCatering && item.ITRequirement == null)
-                                    {
-                                        <span class="text-muted small">Standard room only — no equipment requested</span>
-                                    }
-                                </div>
-
-                                @if (!string.IsNullOrWhiteSpace(item.ITRequirement?.TechNotes))
-                                {
-                                    <div class="alert alert-info py-2 small mb-4">
-                                        <i class="fa-solid fa-note-sticky me-1"></i> <em>@item.ITRequirement.TechNotes</em>
+                <div id="alloc-details-@item.Id" class="collapse">
+                    <div class="card-body pt-3 pb-3 px-4">
+                        <div class="row g-3 small">
+                            <div class="col-md-3"><span class="text-muted">Organizer:</span> <strong>@item.OrganizerName</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Cost Centre:</span> @item.CostCentre</div>
+                            <div class="col-md-3"><span class="text-muted">Participants:</span> @item.ExpectedAttendees</div>
+                            <div class="col-md-3"><span class="text-muted">Submitted:</span> @item.CreatedAt.ToLocalTime().ToString("dd MMM, HH:mm")</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Remarks))
+                            {
+                                <div class="col-12"><span class="text-muted">Remarks:</span> <em>@item.Remarks</em></div>
+                            }
+                            @if (item.RequiresAllocatorHelp && !string.IsNullOrWhiteSpace(item.AllocatorHelpDetails))
+                            {
+                                <div class="col-12">
+                                    <div class="alert alert-primary py-2 mb-0 small">
+                                        <i class="fa-solid fa-circle-question me-1"></i>
+                                        <strong>Allocator Help:</strong> @item.AllocatorHelpDetails
                                     </div>
-                                }
-
-                                <hr />
-                                <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                    <i class="fa-solid fa-gavel me-1"></i> Decision
-                                </h6>
-                                <div class="d-flex gap-2">
-                                    <form asp-action="Approve" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-success fw-bold px-4">
-                                            <i class="fa-solid fa-check me-1"></i> Approve
-                                        </button>
-                                    </form>
-                                    <button type="button" class="btn btn-outline-danger fw-bold"
-                                            data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id">
-                                        <i class="fa-solid fa-xmark me-1"></i> Reject
-                                    </button>
                                 </div>
-                            </div>
+                            }
                         </div>
+
+                        @if (activeTab == "review" || activeTab == "pending")
+                        {
+                            <div class="mt-3 d-flex gap-2">
+                                <form asp-action="Approve" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-success fw-bold">
+                                        <i class="fa-solid fa-check me-1"></i>Approve
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger fw-bold"
+                                        data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id">
+                                    <i class="fa-solid fa-xmark me-1"></i>Reject
+                                </button>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold"
+                                            data-bs-toggle="modal" data-bs-target="#cancelModal-@item.Id">
+                                        <i class="fa-solid fa-ban me-1"></i>Cancel
+                                    </button>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
 
             <!-- Reject Modal -->
-            <div class="modal fade text-start" id="rejectModal-@item.Id" tabindex="-1">
-                <div class="modal-dialog">
+            <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1">
+                <div class="modal-dialog modal-sm">
                     <form asp-action="Reject" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@item.Id" />
                         <div class="modal-content">
-                            <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title"><i class="fa-solid fa-ban me-2"></i> Reject Booking — BKG-@item.Id</h5>
+                            <div class="modal-header py-2" style="background:var(--nrl-navy);">
+                                <h6 class="modal-title text-white">Reject BKG-@item.Id</h6>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <p>Rejecting: <strong>@item.MeetingTitle</strong> by <em>@item.OrganizerName</em></p>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Reason for Rejection *</label>
-                                    <textarea name="reason" class="form-control" rows="3"
-                                              placeholder="e.g., Room reserved for emergency HAZMAT briefing." required></textarea>
-                                </div>
+                                <label class="form-label fw-bold small">Rejection Reason *</label>
+                                <textarea name="reason" class="form-control form-control-sm" rows="3"
+                                          placeholder="State reason for rejection..." required></textarea>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-danger fw-bold">Confirm Rejection</button>
+                            <div class="modal-footer py-2">
+                                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Confirm Reject</button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+
+            <!-- Cancel Modal (Admin only) -->
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="modal fade" id="cancelModal-@item.Id" tabindex="-1">
+                    <div class="modal-dialog modal-sm">
+                        <form asp-action="Cancel" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <div class="modal-content">
+                                <div class="modal-header py-2 bg-secondary text-white">
+                                    <h6 class="modal-title">Cancel BKG-@item.Id</h6>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <textarea name="reason" class="form-control form-control-sm" rows="2"
+                                              placeholder="Reason for cancellation..." required></textarea>
+                                </div>
+                                <div class="modal-footer py-2">
+                                    <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Back</button>
+                                    <button type="submit" class="btn btn-sm btn-dark fw-bold">Confirm Cancel</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
         }
     </div>
 }
 
 @section Scripts {
     <script>
-        function toggleCard(id) {
-            var details = document.getElementById('details-' + id);
-            var icon = document.querySelector('.toggle-icon-' + id);
-            var bsCollapse = bootstrap.Collapse.getOrCreateInstance(details);
-            bsCollapse.toggle();
-            icon.style.transform = details.classList.contains('show') ? 'rotate(0deg)' : 'rotate(180deg)';
+        function toggleAllocCard(id) {
+            var d = document.getElementById('alloc-details-' + id);
+            var i = document.querySelector('.toggle-alloc-icon-' + id);
+            bootstrap.Collapse.getOrCreateInstance(d).toggle();
+            i.style.transform = d.classList.contains('show') ? 'rotate(0deg)' : 'rotate(180deg)';
         }
-
-        // Auto-expand if there's only one card
-        document.addEventListener('DOMContentLoaded', function () {
-            var cards = document.querySelectorAll('[id^="details-"]');
-            if (cards.length === 1) {
-                var id = cards[0].id.replace('details-', '');
-                toggleCard(id);
-            }
-        });
     </script>
 }

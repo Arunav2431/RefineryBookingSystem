@@ -6,7 +6,8 @@ namespace RefineryBooking.Models
         Pending = 0,
         Approved = 1,
         Rejected = 2,
-        Cancelled = 3
+        Cancelled = 3,
+        PendingAllocatorReview = 4
     }
 
     public enum TechSetupStatus

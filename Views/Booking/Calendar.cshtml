@@ -1,27 +1,93 @@
 @{
-    ViewData["Title"] = "Room Availability Calendar";
+    ViewData["Title"] = "Conference Room Calendar";
+    var rooms = ViewBag.Rooms as List<RefineryBooking.Models.ConferenceRoom> ?? new();
 }
 
 <div class="card card-industrial">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-calendar-grid text-warning me-2"></i> Master Conference Room Schedule</h5>
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="mb-0 fw-bold" style="color:var(--nrl-navy);">
+                <i class="fa-solid fa-calendar-days text-primary me-2"></i>Conference Room Availability Calendar
+            </h5>
+            <p class="text-muted small mb-0">Click any date on the calendar to view hourly time slots or book an available slot.</p>
+        </div>
         <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0 small fw-bold">Filter Room:</label>
-            <select id="roomFilter" class="form-select form-select-sm" style="width: 250px;">
-                <option value="0">All Refinery Conference Rooms</option>
-                @foreach (var r in ViewBag.Rooms)
+            <label class="form-label mb-0 small fw-bold">Select Hall:</label>
+            <select id="roomFilter" class="form-select form-select-sm" style="width:240px;border-radius:2px;">
+                @foreach (var r in rooms)
                 {
-                    <option value="@r.Id">@r.Name (@r.BuildingLocation)</option>
+                    <option value="@r.Id">@r.Name (@r.Capacity seats)</option>
                 }
             </select>
+            @if (User.IsInRole("Admin") || User.IsInRole("Allocator"))
+            {
+                <a asp-controller="HallBlock" asp-action="Create" class="btn btn-sm btn-outline-danger">
+                    <i class="fa-solid fa-ban me-1"></i>Block Hall
+                </a>
+            }
         </div>
     </div>
     <div class="card-body p-4">
-        <div class="mb-3 d-flex gap-3 small">
-            <div><span class="badge bg-success">&nbsp;&nbsp;</span> Approved Confirmed</div>
-            <div><span class="badge bg-warning">&nbsp;&nbsp;</span> Pending Allocator Review</div>
+        <!-- Legend -->
+        <div class="d-flex flex-wrap gap-3 mb-3 small py-2 px-3 bg-light border" style="border-radius:2px;">
+            <div class="d-flex align-items-center gap-1">
+                <span style="display:inline-block;width:12px;height:12px;background:#198754;border-radius:2px;"></span>
+                <span>Approved Booking</span>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <span style="display:inline-block;width:12px;height:12px;background:#0d6efd;border-radius:2px;"></span>
+                <span>Pending Review</span>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <span style="display:inline-block;width:12px;height:12px;background:#dc3545;border-radius:2px;"></span>
+                <span>Hall Blocked (Safety/Maintenance)</span>
+            </div>
+            <div class="ms-auto text-muted">
+                <i class="fa-solid fa-hand-pointer me-1"></i>Click any date to inspect time slots
+            </div>
         </div>
+
         <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- TIME SLOT AVAILABILITY MODAL -->
+<div class="modal fade" id="slotModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background:var(--nrl-navy);border-radius:2px 2px 0 0;">
+                <div>
+                    <h6 class="modal-title mb-0 fw-bold" id="slotModalTitle">Time Slot Breakdown</h6>
+                    <small id="slotModalSubtitle" class="opacity-75"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="blockNotice" class="alert alert-danger d-none py-2 mb-3 small">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    <strong id="blockReasonText"></strong> — <span id="blockNotesText"></span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:25%;">Time Slot</th>
+                                <th style="width:20%;">Status</th>
+                                <th style="width:35%;">Details / Booking</th>
+                                <th style="width:20%;" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slotTableBody">
+                            <tr><td colspan="4" class="text-center py-3 text-muted">Loading slots...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -30,30 +96,93 @@
         document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
+                initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridWeek'
                 },
-                slotMinTime: '06:00:00',
-                slotMaxTime: '22:00:00',
-                allDaySlot: false,
                 events: function (info, successCallback, failureCallback) {
                     var roomId = $('#roomFilter').val();
                     $.getJSON('@Url.Action("GetCalendarEvents", "Booking")', { roomId: roomId }, function (data) {
-                        successCallback(data);
+                        // Also fetch hall blocks
+                        $.getJSON('@Url.Action("GetBlockedDates", "HallBlock")', function (blocks) {
+                            var blockEvents = blocks
+                                .filter(b => b.roomId == roomId)
+                                .map(b => ({
+                                    id: 'block-' + b.date,
+                                    title: 'BLOCKED: ' + b.reason,
+                                    start: b.date,
+                                    allDay: true,
+                                    color: '#dc3545',
+                                    textColor: '#ffffff',
+                                    extendedProps: { isBlock: true, reason: b.reason, notes: b.notes }
+                                }));
+                            successCallback(data.concat(blockEvents));
+                        });
                     });
                 },
+                dateClick: function (info) {
+                    openSlotModal(info.dateStr);
+                },
                 eventClick: function (info) {
-                    alert('Meeting: ' + info.event.title + '\nDepartment: ' + info.event.extendedProps.department + '\nStatus: ' + info.event.extendedProps.status);
+                    var dateStr = info.event.startStr.split('T')[0];
+                    openSlotModal(dateStr);
                 }
             });
+
             calendar.render();
 
             $('#roomFilter').change(function () {
                 calendar.refetchEvents();
             });
+
+            function openSlotModal(dateStr) {
+                var roomId = $('#roomFilter').val();
+                var roomName = $('#roomFilter option:selected').text();
+
+                $('#slotModalTitle').text(roomName);
+                $('#slotModalSubtitle').text('Availability for ' + dateStr);
+                $('#slotTableBody').html('<tr><td colspan="4" class="text-center py-3 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading time slots...</td></tr>');
+                $('#blockNotice').addClass('d-none');
+
+                var modal = new bootstrap.Modal(document.getElementById('slotModal'));
+                modal.show();
+
+                $.getJSON('@Url.Action("GetDaySlots", "Booking")', { roomId: roomId, date: dateStr }, function (res) {
+                    $('#slotModalSubtitle').text(res.roomName + ' — ' + res.dateStr);
+
+                    if (res.isBlocked) {
+                        $('#blockReasonText').text('HALL BLOCKED (' + res.blockReason + ')');
+                        $('#blockNotesText').text(res.blockNotes || 'No notes provided.');
+                        $('#blockNotice').removeClass('d-none');
+                    }
+
+                    var html = '';
+                    res.slots.forEach(function (s) {
+                        var badgeClass = s.status === 'Available' ? 'bg-success'
+                                       : s.status === 'Approved'  ? 'bg-danger'
+                                       : s.status === 'Blocked'   ? 'bg-secondary'
+                                       : 'bg-primary';
+
+                        html += '<tr>';
+                        html += '<td class="fw-bold font-monospace">' + s.hour + '</td>';
+                        html += '<td><span class="badge ' + badgeClass + '">' + s.status + '</span></td>';
+                        html += '<td class="small">' + s.details + '</td>';
+                        html += '<td class="text-end">';
+                        if (s.isAvailable && !res.isBlocked) {
+                            var createUrl = '@Url.Action("Create", "Booking")' + '?roomId=' + roomId + '&date=' + dateStr;
+                            html += '<a href="' + createUrl + '" class="btn btn-sm btn-nrl-primary py-0" style="font-size:0.75rem;"><i class="fa-solid fa-plus me-1"></i>Book Slot</a>';
+                        } else {
+                            html += '<span class="text-muted small">—</span>';
+                        }
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+
+                    $('#slotTableBody').html(html);
+                });
+            }
         });
     </script>
 }
