@@ -81,12 +81,15 @@
                                     else
                                     {
                                         <li><a class="dropdown-item" asp-controller="Booking" asp-action="Create">NEW BOOKING</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Booking" asp-action="Index">MY BOOKINGS</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Booking" asp-action="Index">BOOKING HISTORY</a></li>
                                     }
                                 </ul>
                             </li>
                             
-                            <li><a asp-controller="Booking" asp-action="Calendar" class="nav-item @(ViewData["Title"]?.ToString() == "Conference Room Calendar" ? "active" : "")">ROOM CALENDAR</a></li>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Allocator") || User.IsInRole("ITFM"))
+                            {
+                                <li><a asp-controller="Booking" asp-action="Calendar" class="nav-item @(ViewData["Title"]?.ToString() == "Conference Room Calendar" ? "active" : "")">ROOM CALENDAR</a></li>
+                            }
                             
                             @if (User.IsInRole("Allocator") || User.IsInRole("Admin"))
                             {
