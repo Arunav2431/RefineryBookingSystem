@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using RefineryBooking.Data;
 using RefineryBooking.Models;
+using System.Security.Claims;
 
 namespace RefineryBooking.Controllers
 {
@@ -34,7 +35,7 @@ namespace RefineryBooking.Controllers
                 userRoles[user.Id] = roles.FirstOrDefault() ?? "—";
             }
             ViewBag.UserRoles = userRoles;
-            return View(users);
+            return View("UserList", users);
         }
 
         // ── CREATE USER GET ──────────────────────────────────────────────────
@@ -132,6 +133,68 @@ namespace RefineryBooking.Controllers
             await _userManager.SetLockoutEndDateAsync(user, null);
             TempData["SuccessMessage"] = $"User '{user.FullName}' has been reactivated.";
             return RedirectToAction(nameof(Users));
+        }
+
+        // ── BOOKING HISTORY (ADMIN ONLY) ─────────────────────────────────────
+        public async Task<IActionResult> BookingHistory(string? searchHallName, int page = 1)
+        {
+            int pageSize = 50;
+            var query = _context.Bookings
+                .Include(b => b.ConferenceRoom)
+                .Include(b => b.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchHallName))
+            {
+                query = query.Where(b => b.ConferenceRoom != null && b.ConferenceRoom.Name.Contains(searchHallName));
+            }
+
+            var bookings = await query
+                .OrderBy(b => b.Status == BookingStatus.Pending || b.Status == BookingStatus.PendingAllocatorReview ? 0 : 1)
+                .ThenByDescending(b => b.StartTime)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.SearchHallName = searchHallName;
+            ViewBag.CurrentPage = page;
+            ViewBag.HasNextPage = bookings.Count == pageSize; 
+            
+            return View(bookings);
+        }
+
+        // ── CANCEL BOOKING (ADMIN ONLY) ──────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelBooking(int id)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null) return NotFound();
+
+            if (booking.EndTime > DateTime.Now && booking.Status != BookingStatus.Cancelled && booking.Status != BookingStatus.Rejected)
+            {
+                booking.Status = BookingStatus.Cancelled;
+                booking.RejectionReason = $"Cancelled by Admin ({User.Identity?.Name})";
+
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                    UserName = User.Identity?.Name,
+                    Action = "CANCEL_BOOKING_ADMIN",
+                    EntityName = "Booking",
+                    EntityId = booking.Id.ToString(),
+                    Details = $"Booking {booking.Id} cancelled by Admin."
+                });
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Booking BKG-{booking.Id} has been cancelled.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "This booking cannot be cancelled (it may have already completed, or is already cancelled).";
+            }
+
+            return RedirectToAction(nameof(BookingHistory));
         }
 
         private static List<string> GetDepartments() => new()

@@ -125,7 +125,7 @@ namespace RefineryBooking.Controllers
 
             // 1. Assign backend data immediately
             booking.UserId = userId;
-            booking.Status = BookingStatus.Pending;
+            booking.Status = User.IsInRole("Admin") ? BookingStatus.Approved : BookingStatus.Pending;
             booking.CreatedAt = DateTime.UtcNow;
 
             // 2. Clear validation checks for properties set programmatically
@@ -229,7 +229,16 @@ namespace RefineryBooking.Controllers
                 });
 
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Booking request BKG-{booking.Id} submitted successfully! Awaiting Allocator review.";
+                
+                if (booking.Status == BookingStatus.Approved)
+                {
+                    TempData["SuccessMessage"] = $"Booking BKG-{booking.Id} submitted and automatically APPROVED.";
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = $"Booking request BKG-{booking.Id} submitted successfully! Awaiting Allocator review.";
+                }
+                
                 return RedirectToAction(nameof(Index));
             }
 
@@ -372,6 +381,40 @@ namespace RefineryBooking.Controllers
                 blockNotes = block?.Notes,
                 slots
             });
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
+
+            if (booking == null) return NotFound();
+
+            if (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.PendingAllocatorReview)
+            {
+                booking.Status = BookingStatus.Cancelled;
+                booking.RejectionReason = $"Cancelled by user {User.Identity?.Name}";
+
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = userId,
+                    UserName = User.Identity?.Name,
+                    Action = "CANCEL_BOOKING",
+                    EntityName = "Booking",
+                    EntityId = booking.Id.ToString(),
+                    Details = $"Booking {booking.Id} cancelled by the user."
+                });
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Your booking request has been cancelled.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "You can only cancel pending requests. For approved meetings, contact the Administrator.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
