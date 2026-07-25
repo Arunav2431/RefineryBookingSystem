@@ -1,13 +1,13 @@
 /* ============================================================
-   NRL Conference Booking System — Enterprise UI
-   Colour Palette: #0b2553 (Navy) | #ffffff (White) | #f0f2f5 (BG)
+   NRL Conference Hall Booking System — Enterprise UI
+   Colour Palette: #0b2553 (Navy Blue) & White (#ffffff) ONLY
    ============================================================ */
 
 :root {
     --nrl-navy:       #0b2553;
-    --nrl-navy-dark:  #081c3e;
-    --nrl-navy-mid:   #133070;
-    --nrl-navy-light: #1a4090;
+    --nrl-navy-dark:  #0b2553;
+    --nrl-navy-mid:   #0b2553;
+    --nrl-navy-light: #0b2553;
     --nrl-white:      #ffffff;
     --nrl-bg:         #f0f2f5;
     --nrl-border:     #d0d7e3;
@@ -27,15 +27,21 @@ body {
     margin-bottom: 60px;
 }
 
+/* ---- No Glow Effects on Any Element ---- */
+*, *:focus, *.focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
 /* ---- Navbar ---- */
 .navbar-nrl {
-    background-color: var(--nrl-navy);
-    border-bottom: 3px solid var(--nrl-navy-light);
+    background-color: #0b2553;
+    border-bottom: 3px solid #0b2553;
     padding: 0;
 }
 
 .navbar-nrl .navbar-brand {
-    color: var(--nrl-white) !important;
+    color: #ffffff !important;
     font-weight: 700;
     font-size: 1rem;
     letter-spacing: 0.02em;
@@ -46,11 +52,13 @@ body {
     gap: 10px;
 }
 
+/* Original Logo Display - No Filters */
 .navbar-nrl .navbar-brand img {
-    height: 38px;
+    height: 42px;
     width: auto;
-    filter: brightness(0) invert(1);
-    background: transparent;
+    background: #ffffff;
+    padding: 2px 6px;
+    border-radius: 2px;
 }
 
 .navbar-nrl .nav-link {
@@ -59,118 +67,85 @@ body {
     font-weight: 500;
     padding: 0.9rem 1rem !important;
     border-bottom: 3px solid transparent;
-    transition: all 0.15s ease;
+    transition: none;
     letter-spacing: 0.01em;
 }
 
 .navbar-nrl .nav-link:hover,
 .navbar-nrl .nav-link.active {
-    color: var(--nrl-white) !important;
-    border-bottom-color: var(--nrl-white);
-    background-color: rgba(255,255,255,0.08);
-}
-
-.navbar-nrl .nav-link.nav-role-link {
-    color: rgba(255,255,255,0.7) !important;
-}
-
-.navbar-nrl .nav-link.nav-role-link:hover {
-    color: var(--nrl-white) !important;
+    color: #ffffff !important;
+    border-bottom-color: #ffffff;
+    background-color: rgba(255,255,255,0.1);
 }
 
 .navbar-nrl .dropdown-menu {
-    border: 1px solid var(--nrl-border);
-    border-top: 3px solid var(--nrl-navy);
+    border: 1px solid #0b2553;
+    border-top: 3px solid #0b2553;
     border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     font-size: 0.85rem;
+    box-shadow: none !important;
 }
 
 .navbar-nrl .dropdown-item:hover {
-    background-color: var(--nrl-bg);
-    color: var(--nrl-navy);
+    background-color: #f0f2f5;
+    color: #0b2553;
 }
 
-/* ---- Top system header bar ---- */
+/* ---- Top System Header Bar ---- */
 .system-topbar {
-    background-color: var(--nrl-navy-dark);
-    color: rgba(255,255,255,0.65);
-    font-size: 0.72rem;
-    padding: 3px 16px;
+    background-color: #0b2553;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    font-size: 0.75rem;
+    padding: 4px 16px;
     letter-spacing: 0.03em;
 }
 
 /* ---- Cards ---- */
-.card-nrl {
+.card-nrl, .card-industrial {
     border: 1px solid var(--nrl-border);
-    border-top: 3px solid var(--nrl-navy);
+    border-top: 3px solid #0b2553;
     border-radius: 2px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    background: var(--nrl-white);
+    background: #ffffff;
+    box-shadow: none !important;
 }
 
-.card-nrl .card-header {
+.card-nrl .card-header, .card-industrial .card-header {
     background-color: #f7f9fc;
     border-bottom: 1px solid var(--nrl-border);
     padding: 0.75rem 1.25rem;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--nrl-navy);
-    letter-spacing: 0.01em;
+    color: #0b2553;
 }
 
-/* keep old class working */
-.card-industrial {
-    border: 1px solid var(--nrl-border);
-    border-top: 3px solid var(--nrl-navy);
-    border-radius: 2px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    background: var(--nrl-white);
-}
-
-.card-industrial .card-header {
-    background-color: #f7f9fc;
-    border-bottom: 1px solid var(--nrl-border);
-    font-size: 0.875rem;
-}
-
-/* ---- Buttons ---- */
-.btn-nrl-primary {
-    background-color: var(--nrl-navy);
-    color: var(--nrl-white);
-    border: 1px solid var(--nrl-navy);
-    font-weight: 600;
-    border-radius: 2px;
-    letter-spacing: 0.02em;
-    font-size: 0.85rem;
-}
-
-.btn-nrl-primary:hover {
-    background-color: var(--nrl-navy-dark);
-    color: var(--nrl-white);
-    border-color: var(--nrl-navy-dark);
-}
-
-/* Replace all yellow/amber buttons with navy */
-.btn-amber {
-    background-color: var(--nrl-navy) !important;
-    color: var(--nrl-white) !important;
-    border: 1px solid var(--nrl-navy) !important;
+/* ---- Buttons (No Glow) ---- */
+.btn-nrl-primary, .btn-amber, .btn-primary {
+    background-color: #0b2553 !important;
+    color: #ffffff !important;
+    border: 1px solid #0b2553 !important;
     font-weight: 600 !important;
     border-radius: 2px !important;
     font-size: 0.85rem;
+    box-shadow: none !important;
 }
 
-.btn-amber:hover {
-    background-color: var(--nrl-navy-dark) !important;
-    color: var(--nrl-white) !important;
+.btn-nrl-primary:hover, .btn-amber:hover, .btn-primary:hover {
+    background-color: #05142e !important;
+    color: #ffffff !important;
+    border-color: #05142e !important;
+}
+
+.btn:focus, .btn:active, .form-control:focus, .form-select:focus {
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 /* ---- Form controls ---- */
 .form-control:focus,
 .form-select:focus {
-    border-color: var(--nrl-navy);
-    box-shadow: 0 0 0 0.15rem rgba(11, 37, 83, 0.2);
+    border-color: #0b2553 !important;
+    box-shadow: none !important;
 }
 
 .form-label {
@@ -184,17 +159,18 @@ body {
     border-radius: 2px;
     border-color: var(--nrl-divider);
     font-size: 0.875rem;
+    box-shadow: none !important;
 }
 
 /* ---- Tables ---- */
 .table thead th {
-    background-color: var(--nrl-navy);
-    color: var(--nrl-white);
+    background-color: #0b2553 !important;
+    color: #ffffff !important;
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    border-color: var(--nrl-navy-mid);
+    border-color: #0b2553 !important;
     padding: 0.65rem 1rem;
 }
 
@@ -204,27 +180,27 @@ body {
 
 .table-light thead th {
     background-color: #eef1f7 !important;
-    color: var(--nrl-navy) !important;
+    color: #0b2553 !important;
 }
 
-/* ---- Badges — replace yellow ---- */
-.badge.bg-warning { background-color: #e8ecf5 !important; color: var(--nrl-navy) !important; border: 1px solid var(--nrl-border); }
-.text-warning { color: var(--nrl-navy) !important; }
-.border-warning { border-color: var(--nrl-navy) !important; }
-.bg-warning { background-color: #e8ecf5 !important; color: var(--nrl-navy) !important; }
+/* ---- Badges ---- */
+.badge.bg-warning { background-color: #e8ecf5 !important; color: #0b2553 !important; border: 1px solid var(--nrl-border); }
+.text-warning { color: #0b2553 !important; }
+.border-warning { border-color: #0b2553 !important; }
+.bg-warning { background-color: #e8ecf5 !important; color: #0b2553 !important; }
 
-/* ---- Status colours (keep green/red for semantic meaning) ---- */
+/* Status colours */
 .badge.bg-success { background-color: #1a6e3a !important; }
 .badge.bg-danger  { background-color: #9c1a1a !important; }
-.badge.bg-info    { background-color: var(--nrl-navy-mid) !important; color: #fff !important; }
+.badge.bg-info    { background-color: #0b2553 !important; color: #fff !important; }
 .badge.bg-secondary { background-color: #4a5568 !important; }
-.badge.bg-dark    { background-color: var(--nrl-navy-dark) !important; }
+.badge.bg-dark    { background-color: #0b2553 !important; }
 
 /* ---- Alerts ---- */
 .alert-info {
     background-color: #eef2fb;
-    border-color: var(--nrl-navy-light);
-    color: var(--nrl-navy);
+    border-color: #0b2553;
+    color: #0b2553;
 }
 
 /* ---- Section headers ---- */
@@ -243,14 +219,14 @@ body {
 h2.page-title {
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--nrl-navy);
+    color: #0b2553;
     letter-spacing: 0.01em;
 }
 
 /* ---- Footer ---- */
 .site-footer {
-    background-color: var(--nrl-navy);
-    color: rgba(255,255,255,0.55);
+    background-color: #0b2553;
+    color: rgba(255,255,255,0.75);
     font-size: 0.75rem;
     text-align: center;
     padding: 10px;
@@ -258,13 +234,21 @@ h2.page-title {
     bottom: 0;
     width: 100%;
     letter-spacing: 0.03em;
-    border-top: 2px solid var(--nrl-navy-light);
+    border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.site-footer img {
+    height: 18px;
+    background: #ffffff;
+    padding: 1px 4px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 8px;
 }
 
 /* ---- Booking card strips ---- */
 .bkg-card-header {
     cursor: pointer;
-    transition: background-color 0.15s;
 }
 .bkg-card-header:hover {
     background-color: #f0f4fc !important;
@@ -272,12 +256,12 @@ h2.page-title {
 
 /* ---- Login page ---- */
 .login-panel {
-    border-top: 4px solid var(--nrl-navy);
+    border-top: 4px solid #0b2553;
     border-radius: 2px;
 }
 
-/* ---- Remove all amber/yellow inline colours from older views ---- */
+/* ---- Remove all amber/yellow inline colours ---- */
 [style*="color: var(--refinery-amber)"],
 [style*="color: var(--refinery-navy)"] {
-    color: var(--nrl-navy) !important;
+    color: #0b2553 !important;
 }
