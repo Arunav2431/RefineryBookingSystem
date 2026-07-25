@@ -136,12 +136,12 @@ namespace RefineryBooking.Controllers
             ModelState.Remove("itReq.Booking");
             ModelState.Remove("itReq.BookingId");
 
-            // 3. Working Hours Validation (08:00 – 18:00)
-            var workStart = booking.StartTime.Date.AddHours(8);
-            var workEnd = booking.StartTime.Date.AddHours(18);
+            // 3. Working Hours Validation (09:30 – 17:30)
+            var workStart = booking.StartTime.Date.AddHours(9).AddMinutes(30);
+            var workEnd = booking.StartTime.Date.AddHours(17).AddMinutes(30);
             if (booking.StartTime < workStart || booking.EndTime > workEnd)
             {
-                ModelState.AddModelError("", "Bookings must be within working hours: 08:00 – 18:00.");
+                ModelState.AddModelError("", "Bookings must be within working hours: 09:30 – 17:30.");
             }
 
             // 4. Time range validation
@@ -295,18 +295,55 @@ namespace RefineryBooking.Controllers
             if (roomId.HasValue && roomId.Value > 0)
                 query = query.Where(b => b.ConferenceRoomId == roomId.Value);
 
-            var events = await query.Select(b => new
-            {
-                id = b.Id,
-                title = $"{b.ConferenceRoom!.Name}: {b.MeetingTitle}",
-                start = b.StartTime.ToString("yyyy-MM-ddTHH:mm:ss"),
-                end = b.EndTime.ToString("yyyy-MM-ddTHH:mm:ss"),
-                color = b.Status == BookingStatus.Approved ? "#198754" : "#ffc107",
-                textColor = b.Status == BookingStatus.Approved ? "#ffffff" : "#000000",
-                extendedProps = new { status = b.Status.ToString(), department = b.Department, attendees = b.ExpectedAttendees }
-            }).ToListAsync();
+            var eventList = new List<object>();
+            var bookings = await query.ToListAsync();
 
-            return Json(events);
+            foreach (var b in bookings)
+            {
+                eventList.Add(new
+                {
+                    id = b.Id,
+                    title = $"{b.ConferenceRoom!.Name}: {b.MeetingTitle}",
+                    start = b.StartTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    end = b.EndTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    color = b.Status == BookingStatus.Approved ? "#198754" : "#ffc107",
+                    textColor = b.Status == BookingStatus.Approved ? "#ffffff" : "#000000",
+                    extendedProps = new { status = b.Status.ToString(), department = b.Department, attendees = b.ExpectedAttendees }
+                });
+            }
+
+            if (User.IsInRole("Admin") || User.IsInRole("Allocator"))
+            {
+                var groupedByDate = bookings.GroupBy(b => b.StartTime.Date);
+                int totalRooms = roomId.HasValue && roomId.Value > 0 ? 1 : await _context.ConferenceRooms.CountAsync(r => r.IsActive);
+                double totalCapacityHours = totalRooms * 8.0;
+
+                foreach (var group in groupedByDate)
+                {
+                    double bookedHours = group.Sum(b => (b.EndTime - b.StartTime).TotalHours);
+
+                    if (bookedHours >= totalCapacityHours)
+                    {
+                        eventList.Add(new
+                        {
+                            start = group.Key.ToString("yyyy-MM-dd"),
+                            display = "background",
+                            color = "rgba(220, 53, 69, 0.2)"
+                        });
+                    }
+                    else if (bookedHours >= totalCapacityHours - 2.0)
+                    {
+                        eventList.Add(new
+                        {
+                            start = group.Key.ToString("yyyy-MM-dd"),
+                            display = "background",
+                            color = "rgba(253, 126, 20, 0.2)"
+                        });
+                    }
+                }
+            }
+
+            return Json(eventList);
         }
 
         [HttpGet]
@@ -322,8 +359,8 @@ namespace RefineryBooking.Controllers
             var room = await _context.ConferenceRooms.FindAsync(roomId);
 
             // Get bookings for this room on this day
-            var dayStart = day.Date.AddHours(8);
-            var dayEnd = day.Date.AddHours(18);
+            var dayStart = day.Date.AddHours(9).AddMinutes(30);
+            var dayEnd = day.Date.AddHours(17).AddMinutes(30);
 
             var bookings = await _context.Bookings
                 .Where(b => b.ConferenceRoomId == roomId &&
@@ -333,15 +370,15 @@ namespace RefineryBooking.Controllers
                 .ToListAsync();
 
             var slots = new List<object>();
-            for (int h = 8; h < 18; h++)
+            for (int h = 0; h < 8; h++)
             {
-                var slotStart = day.Date.AddHours(h);
+                var slotStart = dayStart.AddHours(h);
                 var slotEnd = slotStart.AddHours(1);
 
                 if (block != null)
                 {
                     slots.Add(new {
-                        hour = $"{h:D2}:00 – {h+1:D2}:00",
+                        hour = $"{slotStart:HH:mm} – {slotEnd:HH:mm}",
                         status = "Blocked",
                         details = $"Blocked: {block.Reason} ({block.Notes})",
                         isAvailable = false
@@ -353,7 +390,7 @@ namespace RefineryBooking.Controllers
                     if (match != null)
                     {
                         slots.Add(new {
-                            hour = $"{h:D2}:00 – {h+1:D2}:00",
+                            hour = $"{slotStart:HH:mm} – {slotEnd:HH:mm}",
                             status = match.Status == BookingStatus.Approved ? "Approved" : "Pending",
                             details = $"{match.MeetingTitle} ({match.OrganizerName})",
                             bookingId = match.Id,
@@ -363,7 +400,7 @@ namespace RefineryBooking.Controllers
                     else
                     {
                         slots.Add(new {
-                            hour = $"{h:D2}:00 – {h+1:D2}:00",
+                            hour = $"{slotStart:HH:mm} – {slotEnd:HH:mm}",
                             status = "Available",
                             details = "Free Slot",
                             isAvailable = true,

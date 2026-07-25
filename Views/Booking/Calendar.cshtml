@@ -14,6 +14,7 @@
         <div class="d-flex align-items-center gap-2">
             <label class="form-label mb-0 small fw-bold">Select Hall:</label>
             <select id="roomFilter" class="form-select form-select-sm" style="width:240px;border-radius:2px;">
+                <option value="">-- All Conference Halls --</option>
                 @foreach (var r in rooms)
                 {
                     <option value="@r.Id">@r.Name (@r.Capacity seats)</option>
@@ -42,6 +43,17 @@
                 <span style="display:inline-block;width:12px;height:12px;background:#dc3545;border-radius:2px;"></span>
                 <span>Hall Blocked (Safety/Maintenance)</span>
             </div>
+            @if (User.IsInRole("Admin") || User.IsInRole("Allocator"))
+            {
+                <div class="d-flex align-items-center gap-1 ms-2">
+                    <span style="display:inline-block;width:12px;height:12px;background:rgba(220, 53, 69, 0.4);border-radius:2px;"></span>
+                    <span class="text-danger fw-bold">Fully Booked (Day)</span>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <span style="display:inline-block;width:12px;height:12px;background:rgba(253, 126, 20, 0.4);border-radius:2px;"></span>
+                    <span class="text-warning fw-bold text-dark">Almost Full</span>
+                </div>
+            }
             <div class="ms-auto text-muted">
                 <i class="fa-solid fa-hand-pointer me-1"></i>Click any date to inspect time slots
             </div>
@@ -97,10 +109,12 @@
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                height: 700,
+                expandRows: true,
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 events: function (info, successCallback, failureCallback) {
                     var roomId = $('#roomFilter').val();
@@ -108,9 +122,9 @@
                         // Also fetch hall blocks
                         $.getJSON('@Url.Action("GetBlockedDates", "HallBlock")', function (blocks) {
                             var blockEvents = blocks
-                                .filter(b => b.roomId == roomId)
+                                .filter(b => !roomId || b.roomId == roomId)
                                 .map(b => ({
-                                    id: 'block-' + b.date,
+                                    id: 'block-' + b.date + '-' + b.roomId,
                                     title: 'BLOCKED: ' + b.reason,
                                     start: b.date,
                                     allDay: true,
@@ -139,6 +153,12 @@
 
             function openSlotModal(dateStr) {
                 var roomId = $('#roomFilter').val();
+                
+                if (!roomId) {
+                    alert('Please select a specific Conference Hall from the dropdown to view its hourly slots.');
+                    return;
+                }
+
                 var roomName = $('#roomFilter option:selected').text();
 
                 $('#slotModalTitle').text(roomName);

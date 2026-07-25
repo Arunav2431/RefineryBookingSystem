@@ -101,7 +101,7 @@
                         <div class="col-12">
                             <div class="alert alert-info py-2 mb-0 d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-clock text-info"></i>
-                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>08:00 – 18:00</strong>.</span>
+                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>09:30 – 17:30</strong>.</span>
                                 <span id="slotStatus" class="ms-auto badge bg-secondary">Select times to check</span>
                             </div>
                         </div>
@@ -282,7 +282,7 @@
                 var endH = new Date(end).getHours() + new Date(end).getMinutes() / 60;
                 var badge = $('#slotStatus');
 
-                if (startH < 8 || endH > 18) {
+                if (startH < 9.5 || endH > 17.5) {
                     badge.removeClass('bg-secondary bg-success').addClass('bg-danger').text('Outside working hours!');
                 } else if (startH >= endH) {
                     badge.removeClass('bg-secondary bg-success').addClass('bg-warning text-dark').text('Invalid time range');
