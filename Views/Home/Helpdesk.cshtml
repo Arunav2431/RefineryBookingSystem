@@ -1,0 +1,153 @@
+@{
+    ViewData["Title"] = "Safety & IT Helpdesk";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-dark text-white border-0 shadow-sm" style="background: linear-gradient(135deg, var(--refinery-navy) 0%, #2c3e50 100%);">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="fw-bold mb-1"><i class="fa-solid fa-life-ring text-warning me-2"></i> Refinery Operations Helpdesk & Safety</h2>
+                    <p class="mb-0 text-light opacity-75">24/7 Technical Support, AV Setup Assistance, and Emergency Plant Protocols</p>
+                </div>
+                <div class="d-none d-md-block">
+                    <i class="fa-solid fa-helmet-safety text-warning fa-4x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Safety Protocols & Emergency Contacts -->
+    <div class="col-lg-4">
+        <!-- Safety Protocol Alert -->
+        <div class="card border-danger shadow-sm mb-4">
+            <div class="card-header bg-danger text-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Mandatory Visitor Safety Protocols</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="fa-solid fa-check text-danger me-2 mt-1"></i>
+                        <span><strong>PPE Required:</strong> Hard hats, safety goggles, and steel-toed boots must be worn when moving between conference rooms outside Admin Block A.</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="fa-solid fa-check text-danger me-2 mt-1"></i>
+                        <span><strong>Muster Zones:</strong> In the event of a plant alarm, evacuate all conference rooms immediately and proceed to Assembly Zone 3 (North Gate).</span>
+                    </li>
+                    <li class="d-flex align-items-start">
+                        <i class="fa-solid fa-check text-danger me-2 mt-1"></i>
+                        <span><strong>Intrinsically Safe Tech:</strong> Only company-issued laptops and explosion-proof mobile devices are permitted in Plant 2 briefing zones.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Support Contacts -->
+        <div class="card card-industrial shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-phone-volume text-warning me-2"></i> Direct Support Lines</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <div class="bg-light p-3 rounded me-3 text-primary"><i class="fa-solid fa-desktop fa-lg"></i></div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">IT & AV Desk</h6>
+                        <small class="text-muted d-block">Ext. 4400 | support@refinery.com</small>
+                        <span class="badge bg-success small mt-1">Online 24/7</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <div class="bg-light p-3 rounded me-3 text-warning"><i class="fa-solid fa-screwdriver-wrench fa-lg"></i></div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">Facilities & Catering</h6>
+                        <small class="text-muted d-block">Ext. 4412 | facilities@refinery.com</small>
+                        <span class="badge bg-secondary small mt-1">Mon-Fri 06:00 - 18:00</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="bg-light p-3 rounded me-3 text-danger"><i class="fa-solid fa-truck-medical fa-lg"></i></div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">Plant Emergency / HAZMAT</h6>
+                        <small class="text-muted d-block">Ext. 911 | Radio Channel 1</small>
+                        <span class="badge bg-danger small mt-1">EMERGENCY ONLY</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Interactive FAQ & Help Tickets -->
+    <div class="col-lg-8">
+        <div class="card card-industrial shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-circle-question text-warning me-2"></i> Frequently Asked Questions (FAQ)</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item mb-2 border rounded">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                How far in advance can I book a conference room?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted">
+                                General users can request room bookings up to <strong>30 days in advance</strong>. If you require a recurring meeting slot for quarterly audits or safety reviews beyond 30 days, please contact the Scheduling Allocator directly or submit a special request.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item mb-2 border rounded">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                What happens if I request AV equipment or catering?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted">
+                                When you toggle <em>Video Conferencing</em>, <em>Projector</em>, or <em>Refreshments</em> on your booking form, the system automatically creates a work order in the <strong>IT/Facilities Readiness Queue</strong> as soon as your booking is approved by an Allocator. The ITFM team will prepare the room 15 minutes prior to your meeting start time.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item mb-2 border rounded">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Why was my room booking request rejected?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted">
+                                If an Allocator rejects your request, they are required to input a specific reason (e.g., "Room required for emergency HAZMAT briefing" or "Maintenance in progress"). You can view this exact rejection reason anytime by navigating to <strong>My Bookings</strong> in the top navigation bar and hovering over the red <em>Rejected</em> badge.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border rounded">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                How does the real-time Conflict Guard work?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted">
+                                Our system runs a live check against the SQL Server database the moment you select a room and time slot. If another meeting is already approved or pending review for that overlapping timeframe, the system immediately alerts you on the form and disables the submit button to prevent double-booking.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Need More Help Banner -->
+        <div class="card bg-light border p-4 text-center">
+            <h6 class="fw-bold" style="color: var(--refinery-navy);">Can't find what you're looking for?</h6>
+            <p class="text-muted small mb-3">If you are experiencing hardware issues in a conference room or need urgent scheduling assistance, please raise an IT support ticket.</p>
+            <div>
+                <a href="mailto:support@refinery.com?subject=Conference%20Room%20Support%20Ticket" class="btn btn-amber btn-sm px-4 fw-bold"><i class="fa-solid fa-ticket me-1"></i> Open Helpdesk Ticket</a>
+            </div>
+        </div>
+    </div>
+</div>

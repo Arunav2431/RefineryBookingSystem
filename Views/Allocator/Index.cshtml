@@ -1,0 +1,88 @@
+@model IEnumerable<RefineryBooking.Models.Booking>
+@{
+    ViewData["Title"] = "Allocator Approval Queue";
+}
+
+<div class="card card-industrial border-top border-warning">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-clipboard-check text-warning me-2"></i> Allocator Action Desk: Pending Requests</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Requested By</th>
+                        <th>Meeting details</th>
+                        <th>Room & Time Slot</th>
+                        <th>Requirements</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-4 text-muted">No pending bookings awaiting approval.</td></tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@item.User?.FullName</strong><br/>
+                                <span class="badge bg-light text-dark border">@item.Department</span>
+                            </td>
+                            <td>
+                                <strong class="text-dark">@item.MeetingTitle</strong><br/>
+                                <span class="small text-muted"><i class="fa-solid fa-users me-1"></i> @item.ExpectedAttendees attendees</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary mb-1">@item.ConferenceRoom?.Name</span>
+                                <div class="small fw-bold">@item.StartTime.ToString("MMM dd, HH:mm") - @item.EndTime.ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                @if (item.RequiresCatering) { <span class="badge bg-warning text-dark me-1" title="Catering Requested"><i class="fa-solid fa-mug-hot"></i> Tea/Snacks</span> }
+                                @if (item.ITRequirement?.NeedsVideoConferencing == true) { <span class="badge bg-info text-white me-1" title="Video Conf"><i class="fa-solid fa-video"></i> VC</span> }
+                                @if (item.ITRequirement?.NeedsProjector == true) { <span class="badge bg-primary me-1" title="Projector"><i class="fa-solid fa-projector"></i> Proj</span> }
+                            </td>
+                            <td class="text-end">
+                                <form asp-action="Approve" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-success fw-bold"><i class="fa-solid fa-check me-1"></i> Approve</button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id"><i class="fa-solid fa-xmark"></i> Reject</button>
+
+                                <!-- Reject Modal -->
+                                <div class="modal fade text-start" id="rejectModal-@item.Id" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <form asp-action="Reject" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">Reject Booking Request</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to reject <strong>@item.MeetingTitle</strong>?</p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Reason for Rejection *</label>
+                                                        <textarea name="reason" class="form-control" rows="3" placeholder="e.g., Room reserved for emergency HAZMAT briefing." required></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

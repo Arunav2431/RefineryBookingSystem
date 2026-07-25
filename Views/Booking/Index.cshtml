@@ -1,0 +1,102 @@
+@model IEnumerable<RefineryBooking.Models.Booking>
+@{
+    ViewData["Title"] = "My Room Bookings";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0" style="color: var(--refinery-navy);"><i class="fa-solid fa-list-check text-warning me-2"></i> My Booking Requests</h2>
+        <p class="text-muted">Track the status of all your conference room reservation requests.</p>
+    </div>
+    <div>
+        <a asp-controller="Booking" asp-action="Create" class="btn btn-amber shadow-sm"><i class="fa-solid fa-calendar-plus me-1"></i> New Booking Request</a>
+    </div>
+</div>
+
+<div class="card card-industrial">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i> Reservation History & Status</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Meeting Title</th>
+                        <th>Conference Room</th>
+                        <th>Date & Time Slot</th>
+                        <th>Attendees</th>
+                        <th>AV & Catering</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-calendar-xmark fa-2x mb-3 d-block text-secondary"></i>
+                                You haven't made any room booking requests yet.<br />
+                                Click the <strong>New Booking Request</strong> button above to reserve your first room!
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-dark">@item.MeetingTitle</td>
+                            <td>
+                                <span class="badge bg-secondary"><i class="fa-solid fa-door-closed me-1"></i> @item.ConferenceRoom?.Name</span>
+                                <div class="small text-muted mt-1">@item.ConferenceRoom?.BuildingLocation</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@item.StartTime.ToString("MMM dd, yyyy")</div>
+                                <div class="text-muted small">@item.StartTime.ToString("HH:mm") - @item.EndTime.ToString("HH:mm")</div>
+                            </td>
+                            <td>@item.ExpectedAttendees people</td>
+                            <td>
+                                @if (item.RequiresCatering)
+                                {
+                                    <span class="badge bg-warning text-dark me-1" title="Catering Requested"><i class="fa-solid fa-mug-hot"></i> Refreshments</span>
+                                }
+                                @if (item.ITRequirement?.NeedsVideoConferencing == true)
+                                {
+                                    <span class="badge bg-info text-white me-1" title="Video Conferencing"><i class="fa-solid fa-video"></i> VC</span>
+                                }
+                                @if (item.ITRequirement?.NeedsProjector == true)
+                                {
+                                    <span class="badge bg-primary me-1" title="Projector Required"><i class="fa-solid fa-projector"></i> Projector</span>
+                                }
+                                @if (!item.RequiresCatering && item.ITRequirement == null)
+                                {
+                                    <span class="text-muted small">Standard Room Only</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (item.Status)
+                                {
+                                    case RefineryBooking.Models.BookingStatus.Approved:
+                                        <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-check me-1"></i> Approved</span>
+                                        break;
+                                    case RefineryBooking.Models.BookingStatus.Pending:
+                                        <span class="badge bg-warning text-dark px-3 py-2"><i class="fa-solid fa-hourglass-half me-1"></i> Pending Review</span>
+                                        break;
+                                    case RefineryBooking.Models.BookingStatus.Rejected:
+                                        <span class="badge bg-danger px-3 py-2" data-bs-toggle="tooltip" title="Reason: @item.RejectionReason"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+                                        @if (!string.IsNullOrEmpty(item.RejectionReason))
+                                        {
+                                            <div class="small text-danger mt-1"><em>Note: @item.RejectionReason</em></div>
+                                        }
+                                        break;
+                                    case RefineryBooking.Models.BookingStatus.Cancelled:
+                                        <span class="badge bg-dark px-3 py-2">Cancelled</span>
+                                        break;
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,133 @@
+@model RefineryBooking.Models.Booking
+@{
+    ViewData["Title"] = "Request Room Booking";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-industrial">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-calendar-plus text-warning me-2"></i> Request Conference Room</h5>
+                <span class="badge bg-light text-dark border"><i class="fa-solid fa-shield-halved text-success me-1"></i> Conflict Guard Active</span>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post" id="bookingForm">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- REAL-TIME CONFLICT ALERT BOX -->
+                    <div id="conflictAlert" class="alert alert-danger d-none" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation fa-lg me-2"></i>
+                        <strong id="conflictMessage"></strong>
+                    </div>
+                    <div id="availableAlert" class="alert alert-success d-none" role="alert">
+                        <i class="fa-solid fa-check-circle fa-lg me-2"></i>
+                        <strong>Room is available for this time slot!</strong>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label asp-for="MeetingTitle" class="form-label fw-bold">Meeting Title *</label>
+                            <input asp-for="MeetingTitle" class="form-control" placeholder="e.g., Q3 Pipeline Safety Audit Review" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="ConferenceRoomId" class="form-label fw-bold">Select Room *</label>
+                            <select asp-for="ConferenceRoomId" class="form-select" asp-items="ViewBag.Rooms" id="roomSelect" required></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Department" class="form-label fw-bold">Department *</label>
+                            <input asp-for="Department" class="form-control" required readonly />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="ExpectedAttendees" class="form-label fw-bold">Attendees *</label>
+                            <input asp-for="ExpectedAttendees" type="number" min="1" max="500" class="form-control" value="5" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="StartTime" class="form-label fw-bold">Start Time *</label>
+                            <input asp-for="StartTime" type="datetime-local" class="form-control time-input" id="startTime" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndTime" class="form-label fw-bold">End Time *</label>
+                            <input asp-for="EndTime" type="datetime-local" class="form-control time-input" id="endTime" required />
+                        </div>
+                    </div>
+
+                    <hr />
+                    <h6 class="fw-bold mb-3" style="color: var(--refinery-navy);"><i class="fa-solid fa-headset text-info me-2"></i> IT, AV & Facilities Requirements</h6>
+
+                    <div class="row g-3 mb-3 bg-light p-3 rounded mx-0">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="itReq.NeedsVideoConferencing" value="true" id="vcCheck">
+                                <label class="form-check-label" for="vcCheck"><i class="fa-solid fa-video me-1"></i> Video Conferencing</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="itReq.NeedsProjector" value="true" id="projCheck">
+                                <label class="form-check-label" for="projCheck"><i class="fa-solid fa-projector me-1"></i> Overhead Projector</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="RequiresCatering" id="catCheck">
+                                <label class="form-check-label" for="catCheck"><i class="fa-solid fa-mug-hot me-1"></i> Refreshments / Tea</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mt-3">
+                            <label class="form-label small fw-bold">Microphone Count</label>
+                            <input type="number" name="itReq.MicCount" class="form-control form-control-sm" value="0" min="0" max="20" />
+                        </div>
+                        <div class="col-md-8 mt-3">
+                            <label class="form-label small fw-bold">Special Setup Instructions for ITFM</label>
+                            <input type="text" name="itReq.TechNotes" class="form-control form-control-sm" placeholder="e.g., Need HDMI adapters and guest Wi-Fi vouchers" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="button" id="btnCheckConflict" class="btn btn-info text-white fw-bold"><i class="fa-solid fa-rotate me-1"></i> Verify Availability</button>
+                        <button type="submit" id="btnSubmit" class="btn btn-amber px-4"><i class="fa-solid fa-paper-plane me-1"></i> Submit Booking Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function checkAvailability() {
+                var roomId = $('#roomSelect').val();
+                var start = $('#startTime').val();
+                var end = $('#endTime').val();
+
+                if (!roomId || !start || !end) return;
+
+                $('#conflictAlert').addClass('d-none');
+                $('#availableAlert').addClass('d-none');
+
+                $.getJSON('@Url.Action("CheckAvailability", "Booking")', { roomId: roomId, start: start, end: end }, function (res) {
+                    if (!res.available) {
+                        $('#conflictMessage').text(res.message);
+                        $('#conflictAlert').removeClass('d-none');
+                        $('#btnSubmit').prop('disabled', true);
+                    } else {
+                        $('#availableAlert').removeClass('d-none');
+                        $('#btnSubmit').prop('disabled', false);
+                    }
+                });
+            }
+
+            $('.time-input, #roomSelect').on('change', checkAvailability);
+            $('#btnCheckConflict').click(checkAvailability);
+        });
+    </script>
+}

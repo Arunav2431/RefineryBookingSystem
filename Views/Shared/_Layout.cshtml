@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Refinery Room Bookings</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <!-- FullCalendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" />
+    <style>
+        :root {
+            --refinery-navy: #1a2942;
+            --refinery-amber: #ff9800;
+            --refinery-bg: #f4f6f9;
+        }
+        body { background-color: var(--refinery-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-custom { background-color: var(--refinery-navy); border-bottom: 3px solid var(--refinery-amber); }
+        .navbar-custom .navbar-brand, .navbar-custom .nav-link { color: #ffffff !important; font-weight: 500; }
+        .navbar-custom .nav-link:hover { color: var(--refinery-amber) !important; }
+        .card-industrial { border: none; box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05); border-top: 4px solid var(--refinery-navy); }
+        .btn-amber { background-color: var(--refinery-amber); color: #000; font-weight: bold; }
+        .btn-amber:hover { background-color: #e68a00; color: #000; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-custom navbar-dark py-3">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-oil-well text-warning me-2 fs-4"></i>
+                    <span>REFINERY<strong class="text-warning">BOOKING</strong></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-gauge me-1"></i> Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Calendar"><i class="fa-solid fa-calendar-days me-1"></i> Grid View</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Create"><i class="fa-solid fa-plus-circle me-1"></i> Book Room</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Index"><i class="fa-solid fa-list me-1"></i> My Bookings</a></li>
+
+                            @if (User.IsInRole("Allocator") || User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item"><a class="nav-link text-warning" asp-controller="Allocator" asp-action="Index"><i class="fa-solid fa-clipboard-check me-1"></i> Allocator Desk</a></li>
+                            }
+                            @if (User.IsInRole("ITFM") || User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item"><a class="nav-link text-info" asp-controller="ITFM" asp-action="Index"><i class="fa-solid fa-headset me-1"></i> IT/Facilities Desk</a></li>
+                            }
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-danger" href="#" role="button" data-bs-toggle="dropdown"><i class="fa-solid fa-gear me-1"></i> Admin</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#">Master Rooms</a></li>
+                                        <li><a class="dropdown-item" href="#">User Roles</a></li>
+                                        <li><a class="dropdown-item" href="#">System Audit Logs</a></li>
+                                    </ul>
+                                </li>
+                            }
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Helpdesk"><i class="fa-solid fa-life-ring me-1"></i> Safety & Support</a></li>
+                        </ul>
+                        <div class="d-flex align-items-center text-light">
+                            <span class="me-3 small"><i class="fa-solid fa-user-shield text-warning me-1"></i> @User.Identity.Name</span>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid px-4 my-4">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- JS Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

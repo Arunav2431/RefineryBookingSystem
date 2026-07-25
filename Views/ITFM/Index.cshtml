@@ -1,0 +1,124 @@
+@model IEnumerable<RefineryBooking.Models.ITFacilityRequirement>
+@{
+    ViewData["Title"] = "IT & Facilities Readiness Queue";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0" style="color: var(--refinery-navy);"><i class="fa-solid fa-headset text-info me-2"></i> IT & Facilities Readiness Queue</h2>
+        <p class="text-muted">Manage AV equipment setups, catering readiness, and hardware maintenance for approved meetings.</p>
+    </div>
+</div>
+
+<div class="card card-industrial border-top border-info">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-toolbox text-info me-2"></i> Upcoming Approved Meeting Requirements</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Meeting & Location</th>
+                        <th>Requested By</th>
+                        <th>Equipment Required</th>
+                        <th>Special Setup Notes</th>
+                        <th>Current Status</th>
+                        <th class="text-end">Update Setup Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-check-double fa-2x mb-3 d-block text-success"></i>
+                                No upcoming meetings currently require AV/IT setup or catering!
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong class="text-dark d-block">@item.Booking?.MeetingTitle</strong>
+                                <span class="badge bg-secondary mb-1"><i class="fa-solid fa-door-closed me-1"></i> @item.Booking?.ConferenceRoom?.Name</span>
+                                <div class="small fw-bold text-muted">@item.Booking?.StartTime.ToString("MMM dd, HH:mm") - @item.Booking?.EndTime.ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                <strong>@item.Booking?.User?.FullName</strong>
+                                <span class="badge bg-light text-dark border d-block mt-1">@item.Booking?.Department</span>
+                            </td>
+                            <td>
+                                @if (item.Booking?.RequiresCatering == true)
+                                {
+                                    <span class="badge bg-warning text-dark me-1 mb-1" title="Catering Requested"><i class="fa-solid fa-mug-hot"></i> Refreshments</span>
+                                }
+                                @if (item.NeedsVideoConferencing)
+                                {
+                                    <span class="badge bg-info text-white me-1 mb-1" title="Video Conferencing"><i class="fa-solid fa-video"></i> Video Conf</span>
+                                }
+                                @if (item.NeedsProjector)
+                                {
+                                    <span class="badge bg-primary me-1 mb-1" title="Projector Required"><i class="fa-solid fa-projector"></i> Overhead Projector</span>
+                                }
+                                @if (item.MicCount > 0)
+                                {
+                                    <span class="badge bg-dark me-1 mb-1" title="Microphones"><i class="fa-solid fa-microphone"></i> @item.MicCount Mics</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.TechNotes))
+                                {
+                                    <div class="small bg-light p-2 rounded border border-info border-start-0 border-end-0 border-bottom-0" style="border-top-width: 3px !important;">
+                                        <i class="fa-solid fa-note-sticky text-info me-1"></i> <em>"@item.TechNotes"</em>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None specified</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (item.SetupStatus)
+                                {
+                                    case RefineryBooking.Models.TechSetupStatus.Ready:
+                                        <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-check-circle me-1"></i> Setup Ready</span>
+                                        break;
+                                    case RefineryBooking.Models.TechSetupStatus.Pending:
+                                        <span class="badge bg-warning text-dark px-3 py-2"><i class="fa-solid fa-hourglass-half me-1"></i> Setup Pending</span>
+                                        break;
+                                    case RefineryBooking.Models.TechSetupStatus.IssueReported:
+                                        <span class="badge bg-danger px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Issue Reported</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group shadow-sm" role="group">
+                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.Ready" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success fw-bold" title="Mark as Ready"><i class="fa-solid fa-check"></i> Ready</button>
+                                    </form>
+                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.Pending" />
+                                        <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-bold" title="Set back to Pending"><i class="fa-solid fa-rotate-left"></i></button>
+                                    </form>
+                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.IssueReported" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" title="Report Hardware Issue"><i class="fa-solid fa-triangle-exclamation"></i> Issue</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
