@@ -1,13 +1,13 @@
 /* ============================================================
    NRL Conference Hall Booking System — Enterprise UI
-   Colour Palette: #0b2553 (Navy Blue) & White (#ffffff) ONLY
+   Primary: #0b2553 (Navy Blue)
+   Accent:  #eb5d31 (Refinery Flame / Vermilion Accent)
    ============================================================ */
 
 :root {
     --nrl-navy:       #0b2553;
-    --nrl-navy-dark:  #0b2553;
-    --nrl-navy-mid:   #0b2553;
-    --nrl-navy-light: #0b2553;
+    --nrl-accent:     #eb5d31;
+    --nrl-accent-hover: #d24b21;
     --nrl-white:      #ffffff;
     --nrl-bg:         #f0f2f5;
     --nrl-border:     #d0d7e3;
@@ -27,16 +27,26 @@ body {
     margin-bottom: 60px;
 }
 
-/* ---- No Glow Effects on Any Element ---- */
+/* ---- No Glow Effects ---- */
 *, *:focus, *.focus {
     box-shadow: none !important;
     outline: none !important;
 }
 
+/* ---- Top System Header Bar ---- */
+.system-topbar {
+    background-color: #0b2553;
+    border-bottom: 2px solid #eb5d31;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.75rem;
+    padding: 5px 16px;
+    letter-spacing: 0.03em;
+}
+
 /* ---- Navbar ---- */
 .navbar-nrl {
     background-color: #0b2553;
-    border-bottom: 3px solid #0b2553;
+    border-bottom: 3px solid #eb5d31;
     padding: 0;
 }
 
@@ -52,7 +62,6 @@ body {
     gap: 10px;
 }
 
-/* Original Logo Display - No Filters */
 .navbar-nrl .navbar-brand img {
     height: 42px;
     width: auto;
@@ -67,47 +76,44 @@ body {
     font-weight: 500;
     padding: 0.9rem 1rem !important;
     border-bottom: 3px solid transparent;
-    transition: none;
+    transition: all 0.15s ease-in-out;
     letter-spacing: 0.01em;
 }
 
+/* Hover & Active Links receive the #eb5d31 accent line */
 .navbar-nrl .nav-link:hover,
 .navbar-nrl .nav-link.active {
     color: #ffffff !important;
-    border-bottom-color: #ffffff;
-    background-color: rgba(255,255,255,0.1);
+    border-bottom-color: #eb5d31;
+    background-color: rgba(235, 93, 49, 0.12);
 }
 
 .navbar-nrl .dropdown-menu {
     border: 1px solid #0b2553;
-    border-top: 3px solid #0b2553;
+    border-top: 3px solid #eb5d31;
     border-radius: 0;
     font-size: 0.85rem;
     box-shadow: none !important;
 }
 
 .navbar-nrl .dropdown-item:hover {
-    background-color: #f0f2f5;
+    background-color: #fff3ee;
     color: #0b2553;
+    border-left: 3px solid #eb5d31;
 }
 
-/* ---- Top System Header Bar ---- */
-.system-topbar {
-    background-color: #0b2553;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.85);
-    font-size: 0.75rem;
-    padding: 4px 16px;
-    letter-spacing: 0.03em;
-}
-
-/* ---- Cards ---- */
+/* ---- Cards with Accent Top Border ---- */
 .card-nrl, .card-industrial {
     border: 1px solid var(--nrl-border);
     border-top: 3px solid #0b2553;
     border-radius: 2px;
     background: #ffffff;
     box-shadow: none !important;
+    transition: border-top-color 0.15s ease-in-out;
+}
+
+.card-nrl:hover, .card-industrial:hover {
+    border-top-color: #eb5d31;
 }
 
 .card-nrl .card-header, .card-industrial .card-header {
@@ -119,7 +125,27 @@ body {
     color: #0b2553;
 }
 
-/* ---- Buttons (No Glow) ---- */
+/* ---- Nav Tabs Accent ---- */
+.nav-tabs .nav-link {
+    color: #5a6a80;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #0b2553;
+    border-bottom-color: #eb5d31;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0b2553 !important;
+    font-weight: 700 !important;
+    border-color: #d0d7e3 #d0d7e3 #ffffff !important;
+    border-top: 3px solid #eb5d31 !important;
+}
+
+/* ---- Buttons ---- */
 .btn-nrl-primary, .btn-amber, .btn-primary {
     background-color: #0b2553 !important;
     color: #ffffff !important;
@@ -128,23 +154,30 @@ body {
     border-radius: 2px !important;
     font-size: 0.85rem;
     box-shadow: none !important;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
 
 .btn-nrl-primary:hover, .btn-amber:hover, .btn-primary:hover {
-    background-color: #05142e !important;
+    background-color: #eb5d31 !important;
     color: #ffffff !important;
-    border-color: #05142e !important;
+    border-color: #eb5d31 !important;
 }
 
-.btn:focus, .btn:active, .form-control:focus, .form-select:focus {
-    box-shadow: none !important;
-    outline: none !important;
+.btn-outline-primary {
+    color: #0b2553 !important;
+    border-color: #0b2553 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #eb5d31 !important;
+    color: #ffffff !important;
+    border-color: #eb5d31 !important;
 }
 
 /* ---- Form controls ---- */
 .form-control:focus,
 .form-select:focus {
-    border-color: #0b2553 !important;
+    border-color: #eb5d31 !important;
     box-shadow: none !important;
 }
 
@@ -170,24 +203,29 @@ body {
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    border-color: #0b2553 !important;
+    border-bottom: 2px solid #eb5d31 !important;
     padding: 0.65rem 1rem;
 }
 
 .table tbody tr:hover {
-    background-color: #eef1f7;
+    background-color: #fff5f2;
 }
 
 .table-light thead th {
     background-color: #eef1f7 !important;
     color: #0b2553 !important;
+    border-bottom: 2px solid #eb5d31 !important;
 }
 
 /* ---- Badges ---- */
 .badge.bg-warning { background-color: #e8ecf5 !important; color: #0b2553 !important; border: 1px solid var(--nrl-border); }
-.text-warning { color: #0b2553 !important; }
-.border-warning { border-color: #0b2553 !important; }
+.text-warning { color: #eb5d31 !important; }
+.border-warning { border-color: #eb5d31 !important; }
 .bg-warning { background-color: #e8ecf5 !important; color: #0b2553 !important; }
+
+/* Accent text/badge helpers */
+.text-accent { color: #eb5d31 !important; }
+.badge.bg-accent { background-color: #eb5d31 !important; color: #ffffff !important; }
 
 /* Status colours */
 .badge.bg-success { background-color: #1a6e3a !important; }
@@ -200,17 +238,18 @@ body {
 .alert-info {
     background-color: #eef2fb;
     border-color: #0b2553;
+    border-left: 4px solid #eb5d31;
     color: #0b2553;
 }
 
-/* ---- Section headers ---- */
+/* ---- Section headers with Accent lining ---- */
 .section-header {
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--nrl-text-muted);
-    border-bottom: 1px solid var(--nrl-divider);
+    border-bottom: 2px solid #eb5d31;
     padding-bottom: 6px;
     margin-bottom: 1rem;
 }
@@ -223,10 +262,10 @@ h2.page-title {
     letter-spacing: 0.01em;
 }
 
-/* ---- Footer ---- */
+/* ---- Footer with Accent top border ---- */
 .site-footer {
     background-color: #0b2553;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255,255,255,0.85);
     font-size: 0.75rem;
     text-align: center;
     padding: 10px;
@@ -234,7 +273,7 @@ h2.page-title {
     bottom: 0;
     width: 100%;
     letter-spacing: 0.03em;
-    border-top: 1px solid rgba(255,255,255,0.15);
+    border-top: 3px solid #eb5d31;
 }
 
 .site-footer img {
@@ -246,22 +285,28 @@ h2.page-title {
     margin-right: 8px;
 }
 
-/* ---- Booking card strips ---- */
+/* ---- Booking Card Hover Strips ---- */
 .bkg-card-header {
     cursor: pointer;
+    transition: background-color 0.15s ease-in-out, border-left-color 0.15s ease-in-out;
 }
 .bkg-card-header:hover {
-    background-color: #f0f4fc !important;
+    background-color: #fff5f2 !important;
 }
 
 /* ---- Login page ---- */
-.login-panel {
-    border-top: 4px solid #0b2553;
-    border-radius: 2px;
+.login-header {
+    border-bottom: 3px solid #eb5d31 !important;
 }
-
-/* ---- Remove all amber/yellow inline colours ---- */
-[style*="color: var(--refinery-amber)"],
-[style*="color: var(--refinery-navy)"] {
-    color: #0b2553 !important;
+.login-card {
+    border-top: 4px solid #eb5d31 !important;
+}
+.login-card-head {
+    border-bottom: 2px solid #eb5d31;
+}
+.btn-signin:hover {
+    background-color: #eb5d31 !important;
+}
+.login-footer {
+    border-top: 3px solid #eb5d31 !important;
 }
