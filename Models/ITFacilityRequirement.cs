@@ -15,7 +15,11 @@ namespace RefineryBooking.Models
 
         public bool NeedsVideoConferencing { get; set; }
         public bool NeedsProjector { get; set; }
-        
+        public bool NeedsWhiteboard { get; set; }
+        public bool NeedsPASystem { get; set; }
+        public bool NeedsLaptop { get; set; }
+        public bool NeedsLaserPointer { get; set; }
+
         [Range(0, 20)]
         public int MicCount { get; set; }
 

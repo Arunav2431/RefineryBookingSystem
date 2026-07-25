@@ -15,11 +15,63 @@ namespace RefineryBooking.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWebHostEnvironment _env;
 
-        public BookingController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        private static readonly List<string> CostCentres = new()
+        {
+            "CCU-001 – Catalytic Cracking Unit",
+            "CCU-002 – Fluid Catalytic Cracker (FCC)",
+            "REF-010 – Crude Distillation Unit (CDU)",
+            "REF-011 – Vacuum Distillation Unit (VDU)",
+            "REF-012 – Hydrocracker Unit",
+            "REF-013 – Naphtha Hydrotreater",
+            "REF-014 – Reformer Unit (CCR)",
+            "REF-015 – Alkylation Unit",
+            "REF-016 – Isomerisation Unit",
+            "PLN-020 – Pipeline & Distribution",
+            "PLN-021 – Product Storage & Tankage",
+            "PLN-022 – Offsites & Utilities",
+            "HSE-030 – Health, Safety & Environment",
+            "HSE-031 – HAZMAT Response Team",
+            "HSE-032 – Environmental Compliance",
+            "HSE-033 – Process Safety Management",
+            "ENG-040 – Mechanical Engineering",
+            "ENG-041 – Electrical Engineering",
+            "ENG-042 – Instrumentation & Control",
+            "ENG-043 – Civil & Structural Engineering",
+            "ENG-044 – Rotating Equipment",
+            "ENG-045 – Static Equipment & Piping",
+            "MAINT-050 – Maintenance Planning",
+            "MAINT-051 – Turnaround Management",
+            "MAINT-052 – Shutdown & Start-up",
+            "IT-060 – Information Technology",
+            "IT-061 – DCS / SCADA / OT Systems",
+            "IT-062 – Cybersecurity & Network",
+            "FIN-070 – Finance & Accounting",
+            "FIN-071 – Procurement & Contracts",
+            "FIN-072 – Budget & Cost Control",
+            "LOG-080 – Logistics & Supply Chain",
+            "LOG-081 – Crude Receipt & Scheduling",
+            "LOG-082 – Product Dispatch",
+            "HR-090 – Human Resources",
+            "HR-091 – Training & Development",
+            "HR-092 – Workforce Planning",
+            "ADM-100 – Administration & Corporate Affairs",
+            "ADM-101 – Legal & Compliance",
+            "ADM-102 – Communications & PR",
+            "SEC-110 – Security & Access Control",
+            "QC-120 – Quality Control & Laboratory",
+            "QC-121 – Product Quality Assurance",
+            "OPS-130 – Operations Management",
+            "OPS-131 – Production Planning",
+            "OPS-132 – Plant Optimisation",
+        };
+
+        public BookingController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env)
         {
             _context = context;
             _userManager = userManager;
+            _env = env;
         }
 
         public async Task<IActionResult> Index()
@@ -39,13 +91,14 @@ namespace RefineryBooking.Controllers
         public async Task<IActionResult> Create(int? roomId, string? date)
         {
             ViewBag.Rooms = new SelectList(await _context.ConferenceRooms.Where(r => r.IsActive).ToListAsync(), "Id", "Name", roomId);
-            
+            ViewBag.CostCentres = new SelectList(CostCentres);
+
             var model = new Booking();
             if (roomId.HasValue && !string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
             {
                 model.ConferenceRoomId = roomId.Value;
-                model.StartTime = parsedDate.AddHours(9); // Default 9 AM
-                model.EndTime = parsedDate.AddHours(10);  // Default 10 AM
+                model.StartTime = parsedDate.AddHours(9);
+                model.EndTime = parsedDate.AddHours(10);
             }
             else
             {
@@ -54,14 +107,18 @@ namespace RefineryBooking.Controllers
             }
 
             var user = await _userManager.GetUserAsync(User);
-            if (user != null) model.Department = user.Department;
+            if (user != null)
+            {
+                model.Department = user.Department;
+                model.OrganizerName = user.FullName;
+            }
 
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Booking booking, ITFacilityRequirement itReq)
+        public async Task<IActionResult> Create(Booking booking, ITFacilityRequirement itReq, IFormFile? attachment)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
@@ -71,7 +128,7 @@ namespace RefineryBooking.Controllers
             booking.Status = BookingStatus.Pending;
             booking.CreatedAt = DateTime.UtcNow;
 
-            // 2. Clear validation checks for properties set programmatically in the backend
+            // 2. Clear validation checks for properties set programmatically
             ModelState.Remove("UserId");
             ModelState.Remove("User");
             ModelState.Remove("ConferenceRoom");
@@ -79,7 +136,26 @@ namespace RefineryBooking.Controllers
             ModelState.Remove("itReq.Booking");
             ModelState.Remove("itReq.BookingId");
 
-            // 3. Real-time Database Conflict Check
+            // 3. Working Hours Validation (08:00 – 18:00)
+            var workStart = booking.StartTime.Date.AddHours(8);
+            var workEnd = booking.StartTime.Date.AddHours(18);
+            if (booking.StartTime < workStart || booking.EndTime > workEnd)
+            {
+                ModelState.AddModelError("", "Bookings must be within working hours: 08:00 – 18:00.");
+            }
+
+            // 4. Time range validation
+            if (booking.StartTime >= booking.EndTime)
+            {
+                ModelState.AddModelError("EndTime", "End time must be after start time.");
+            }
+
+            if (booking.StartTime < DateTime.Now)
+            {
+                ModelState.AddModelError("StartTime", "Cannot book meetings in the past.");
+            }
+
+            // 5. Real-time Database Conflict Check
             bool isDoubleBooked = await _context.Bookings.AnyAsync(b =>
                 b.ConferenceRoomId == booking.ConferenceRoomId &&
                 b.Status != BookingStatus.Rejected &&
@@ -93,20 +169,37 @@ namespace RefineryBooking.Controllers
                 ModelState.AddModelError("", "CRITICAL CONFLICT: This room is already booked for the selected timeframe. Please select another slot.");
             }
 
-            if (booking.StartTime >= booking.EndTime)
+            // 6. Handle file attachment upload
+            if (attachment != null && attachment.Length > 0)
             {
-                ModelState.AddModelError("EndTime", "End time must be after start time.");
+                var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".png", ".jpg", ".jpeg" };
+                var ext = Path.GetExtension(attachment.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(ext))
+                {
+                    ModelState.AddModelError("AttachmentPath", "Invalid file type. Allowed: PDF, Word, Excel, Images.");
+                }
+                else if (attachment.Length > 5 * 1024 * 1024) // 5 MB limit
+                {
+                    ModelState.AddModelError("AttachmentPath", "File size must be under 5 MB.");
+                }
+                else
+                {
+                    var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(attachment.FileName)}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    await attachment.CopyToAsync(stream);
+                    booking.AttachmentPath = $"/uploads/{uniqueFileName}";
+                }
             }
 
-            if (booking.StartTime < DateTime.Now)
-            {
-                ModelState.AddModelError("StartTime", "Cannot book meetings in the past.");
-            }
-
-            // 4. Save to Database!
+            // 7. Save to Database
             if (ModelState.IsValid)
             {
-                if (itReq.NeedsVideoConferencing || itReq.NeedsProjector || itReq.MicCount > 0 || !string.IsNullOrEmpty(itReq.TechNotes))
+                if (itReq.NeedsVideoConferencing || itReq.NeedsProjector || itReq.NeedsWhiteboard ||
+                    itReq.NeedsPASystem || itReq.NeedsLaptop || itReq.NeedsLaserPointer ||
+                    itReq.MicCount > 0 || !string.IsNullOrEmpty(itReq.TechNotes))
                 {
                     itReq.SetupStatus = TechSetupStatus.Pending;
                     booking.ITRequirement = itReq;
@@ -114,23 +207,23 @@ namespace RefineryBooking.Controllers
 
                 _context.Bookings.Add(booking);
 
-                // Write to Audit Log
                 _context.AuditLogs.Add(new AuditLog
                 {
                     UserId = userId,
                     UserName = User.Identity?.Name,
                     Action = "CREATE_BOOKING_REQUEST",
                     EntityName = "Booking",
-                    Details = $"Requested room ID {booking.ConferenceRoomId} for {booking.StartTime:g}"
+                    Details = $"Requested room ID {booking.ConferenceRoomId} for {booking.StartTime:g} | Cost Centre: {booking.CostCentre}"
                 });
 
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Room booking request submitted successfully! Awaiting Allocator review.";
+                TempData["SuccessMessage"] = $"Booking request BKG-{booking.Id} submitted successfully! Awaiting Allocator review.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // If validation failed, reload the room dropdown so the form doesn't crash
+            // Reload dropdowns on validation failure
             ViewBag.Rooms = new SelectList(await _context.ConferenceRooms.Where(r => r.IsActive).ToListAsync(), "Id", "Name", booking.ConferenceRoomId);
+            ViewBag.CostCentres = new SelectList(CostCentres, booking.CostCentre);
             return View(booking);
         }
 
@@ -148,17 +241,16 @@ namespace RefineryBooking.Controllers
             );
 
             if (excludeBookingId.HasValue)
-            {
                 query = query.Where(b => b.Id != excludeBookingId.Value);
-            }
 
             var conflict = await query.Select(b => new { b.MeetingTitle, b.StartTime, b.EndTime }).FirstOrDefaultAsync();
 
             if (conflict != null)
             {
-                return Json(new { 
-                    available = false, 
-                    message = $"Conflict with '{conflict.MeetingTitle}' ({conflict.StartTime:HH:mm} - {conflict.EndTime:HH:mm})." 
+                return Json(new
+                {
+                    available = false,
+                    message = $"Conflict with '{conflict.MeetingTitle}' ({conflict.StartTime:HH:mm} – {conflict.EndTime:HH:mm})."
                 });
             }
 
@@ -180,9 +272,7 @@ namespace RefineryBooking.Controllers
                 .Where(b => b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled);
 
             if (roomId.HasValue && roomId.Value > 0)
-            {
                 query = query.Where(b => b.ConferenceRoomId == roomId.Value);
-            }
 
             var events = await query.Select(b => new
             {

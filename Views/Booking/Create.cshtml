@@ -4,18 +4,33 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-9">
+
+        <!-- BOOKING REF BANNER -->
+        <div class="alert d-flex align-items-center gap-3 mb-4 py-3 px-4" style="background:linear-gradient(90deg,#1a2a4a,#0d3b7a);border-radius:12px;color:#fff;">
+            <i class="fa-solid fa-hashtag fa-lg text-warning"></i>
+            <div>
+                <span class="fw-bold fs-6">Booking Reference</span><br />
+                <span class="text-warning fw-bold">BKG-AUTO</span>
+                <span class="text-white-50 small ms-2">— will be assigned automatically upon submission</span>
+            </div>
+        </div>
+
         <div class="card card-industrial">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-calendar-plus text-warning me-2"></i> Request Conference Room</h5>
-                <span class="badge bg-light text-dark border"><i class="fa-solid fa-shield-halved text-success me-1"></i> Conflict Guard Active</span>
+                <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);">
+                    <i class="fa-solid fa-calendar-plus text-warning me-2"></i> Request Conference Room
+                </h5>
+                <span class="badge bg-light text-dark border">
+                    <i class="fa-solid fa-shield-halved text-success me-1"></i> Conflict Guard Active
+                </span>
             </div>
             <div class="card-body p-4">
-                <form asp-action="Create" method="post" id="bookingForm">
+                <form asp-action="Create" method="post" id="bookingForm" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                    <!-- REAL-TIME CONFLICT ALERT BOX -->
+                    <!-- REAL-TIME CONFLICT ALERTS -->
                     <div id="conflictAlert" class="alert alert-danger d-none" role="alert">
                         <i class="fa-solid fa-triangle-exclamation fa-lg me-2"></i>
                         <strong id="conflictMessage"></strong>
@@ -25,75 +40,166 @@
                         <strong>Room is available for this time slot!</strong>
                     </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-12">
-                            <label asp-for="MeetingTitle" class="form-label fw-bold">Meeting Title *</label>
+                    <!-- ===== SECTION 1: MEETING INFO ===== -->
+                    <h6 class="fw-bold mb-3 text-uppercase small letter-spacing-1" style="color:var(--refinery-navy);">
+                        <i class="fa-solid fa-circle-info me-2 text-warning"></i>Meeting Information
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label asp-for="MeetingTitle" class="form-label fw-semibold">Purpose / Meeting Title *</label>
                             <input asp-for="MeetingTitle" class="form-control" placeholder="e.g., Q3 Pipeline Safety Audit Review" required />
+                            <span asp-validation-for="MeetingTitle" class="text-danger small"></span>
                         </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="ConferenceRoomId" class="form-label fw-bold">Select Room *</label>
-                            <select asp-for="ConferenceRoomId" class="form-select" asp-items="ViewBag.Rooms" id="roomSelect" required></select>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="Department" class="form-label fw-bold">Department *</label>
-                            <input asp-for="Department" class="form-control" required readonly />
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="ExpectedAttendees" class="form-label fw-bold">Attendees *</label>
+                        <div class="col-md-4">
+                            <label asp-for="ExpectedAttendees" class="form-label fw-semibold">No. of Participants *</label>
                             <input asp-for="ExpectedAttendees" type="number" min="1" max="500" class="form-control" value="5" required />
+                            <span asp-validation-for="ExpectedAttendees" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OrganizerName" class="form-label fw-semibold">Organizer Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-user text-secondary"></i></span>
+                                <input asp-for="OrganizerName" class="form-control" readonly style="background:#f8f9fa;" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Department" class="form-label fw-semibold">Department</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-building text-secondary"></i></span>
+                                <input asp-for="Department" class="form-control" readonly style="background:#f8f9fa;" />
+                            </div>
                         </div>
                     </div>
 
+                    <hr class="my-3" />
+
+                    <!-- ===== SECTION 2: ROOM & SCHEDULE ===== -->
+                    <h6 class="fw-bold mb-3 text-uppercase small" style="color:var(--refinery-navy);">
+                        <i class="fa-solid fa-door-open me-2 text-warning"></i>Hall & Schedule
+                    </h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label asp-for="StartTime" class="form-label fw-bold">Start Time *</label>
-                            <input asp-for="StartTime" type="datetime-local" class="form-control time-input" id="startTime" required />
+                            <label asp-for="ConferenceRoomId" class="form-label fw-semibold">Hall Selection *</label>
+                            <select asp-for="ConferenceRoomId" class="form-select" asp-items="ViewBag.Rooms" id="roomSelect" required>
+                                <option value="">-- Select Conference Hall --</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="EndTime" class="form-label fw-bold">End Time *</label>
+                            <label asp-for="CostCentre" class="form-label fw-semibold">Cost Centre *</label>
+                            <select asp-for="CostCentre" class="form-select" asp-items="ViewBag.CostCentres" required>
+                                <option value="">-- Select Cost Centre --</option>
+                            </select>
+                            <span asp-validation-for="CostCentre" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="StartTime" class="form-label fw-semibold">Start Time *</label>
+                            <input asp-for="StartTime" type="datetime-local" class="form-control time-input" id="startTime" required />
+                            <span asp-validation-for="StartTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndTime" class="form-label fw-semibold">End Time *</label>
                             <input asp-for="EndTime" type="datetime-local" class="form-control time-input" id="endTime" required />
+                            <span asp-validation-for="EndTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-info py-2 mb-0 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-clock text-info"></i>
+                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>08:00 – 18:00</strong>.</span>
+                                <span id="slotStatus" class="ms-auto badge bg-secondary">Select times to check</span>
+                            </div>
                         </div>
                     </div>
 
-                    <hr />
-                    <h6 class="fw-bold mb-3" style="color: var(--refinery-navy);"><i class="fa-solid fa-headset text-info me-2"></i> IT, AV & Facilities Requirements</h6>
+                    <hr class="my-3" />
 
-                    <div class="row g-3 mb-3 bg-light p-3 rounded mx-0">
+                    <!-- ===== SECTION 3: EQUIPMENT ===== -->
+                    <h6 class="fw-bold mb-3 text-uppercase small" style="color:var(--refinery-navy);">
+                        <i class="fa-solid fa-plug me-2 text-warning"></i>Equipment Required
+                    </h6>
+                    <div class="row g-3 mb-4 bg-light p-3 rounded mx-0">
                         <div class="col-md-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="itReq.NeedsVideoConferencing" value="true" id="vcCheck">
-                                <label class="form-check-label" for="vcCheck"><i class="fa-solid fa-video me-1"></i> Video Conferencing</label>
+                                <label class="form-check-label" for="vcCheck"><i class="fa-solid fa-video me-1 text-info"></i> Video Conferencing</label>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="itReq.NeedsProjector" value="true" id="projCheck">
-                                <label class="form-check-label" for="projCheck"><i class="fa-solid fa-projector me-1"></i> Overhead Projector</label>
+                                <label class="form-check-label" for="projCheck"><i class="fa-solid fa-projector me-1 text-primary"></i> Overhead Projector</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="itReq.NeedsWhiteboard" value="true" id="wbCheck">
+                                <label class="form-check-label" for="wbCheck"><i class="fa-solid fa-chalkboard me-1 text-success"></i> Whiteboard</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="itReq.NeedsPASystem" value="true" id="paCheck">
+                                <label class="form-check-label" for="paCheck"><i class="fa-solid fa-tower-broadcast me-1 text-danger"></i> PA System</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="itReq.NeedsLaptop" value="true" id="lapCheck">
+                                <label class="form-check-label" for="lapCheck"><i class="fa-solid fa-laptop me-1 text-secondary"></i> Laptop</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="itReq.NeedsLaserPointer" value="true" id="lpCheck">
+                                <label class="form-check-label" for="lpCheck"><i class="fa-solid fa-computer-mouse me-1 text-warning"></i> Laser Pointer</label>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" asp-for="RequiresCatering" id="catCheck">
-                                <label class="form-check-label" for="catCheck"><i class="fa-solid fa-mug-hot me-1"></i> Refreshments / Tea</label>
+                                <label class="form-check-label" for="catCheck"><i class="fa-solid fa-mug-hot me-1 text-warning"></i> Refreshments / Tea</label>
                             </div>
                         </div>
-                        <div class="col-md-4 mt-3">
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">Microphone Count</label>
                             <input type="number" name="itReq.MicCount" class="form-control form-control-sm" value="0" min="0" max="20" />
                         </div>
-                        <div class="col-md-8 mt-3">
-                            <label class="form-label small fw-bold">Special Setup Instructions for ITFM</label>
-                            <input type="text" name="itReq.TechNotes" class="form-control form-control-sm" placeholder="e.g., Need HDMI adapters and guest Wi-Fi vouchers" />
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Other / Special Instructions for AV Team</label>
+                            <input type="text" name="itReq.TechNotes" class="form-control form-control-sm" placeholder="e.g., Need HDMI adapters, guest Wi-Fi vouchers, stage lighting" />
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2">
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="button" id="btnCheckConflict" class="btn btn-info text-white fw-bold"><i class="fa-solid fa-rotate me-1"></i> Verify Availability</button>
-                        <button type="submit" id="btnSubmit" class="btn btn-amber px-4"><i class="fa-solid fa-paper-plane me-1"></i> Submit Booking Request</button>
+                    <hr class="my-3" />
+
+                    <!-- ===== SECTION 4: ADDITIONAL DETAILS ===== -->
+                    <h6 class="fw-bold mb-3 text-uppercase small" style="color:var(--refinery-navy);">
+                        <i class="fa-solid fa-file-lines me-2 text-warning"></i>Additional Details
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label asp-for="Remarks" class="form-label fw-semibold">Remarks / Notes</label>
+                            <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Any special arrangements, access requirements, or notes for the Allocator..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Attachment <span class="text-muted small fw-normal">(PDF, Word, Excel, Images — max 5 MB)</span></label>
+                            <input type="file" name="attachment" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" id="attachmentInput" />
+                            <div id="filePreview" class="mt-2 text-muted small d-none">
+                                <i class="fa-solid fa-paperclip me-1"></i><span id="fileName"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex justify-content-end gap-2 mt-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="button" id="btnCheckConflict" class="btn btn-info text-white fw-bold">
+                            <i class="fa-solid fa-rotate me-1"></i> Verify Availability
+                        </button>
+                        <button type="submit" id="btnSubmit" class="btn btn-amber px-4">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Submit Request
+                        </button>
                     </div>
                 </form>
             </div>
@@ -104,10 +210,44 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+
+            // File name preview
+            $('#attachmentInput').on('change', function () {
+                var file = this.files[0];
+                if (file) {
+                    $('#fileName').text(file.name);
+                    $('#filePreview').removeClass('d-none');
+                } else {
+                    $('#filePreview').addClass('d-none');
+                }
+            });
+
+            // Working hours visual indicator
+            function checkWorkingHours() {
+                var start = $('#startTime').val();
+                var end = $('#endTime').val();
+                if (!start || !end) return;
+
+                var startH = new Date(start).getHours() + new Date(start).getMinutes() / 60;
+                var endH = new Date(end).getHours() + new Date(end).getMinutes() / 60;
+                var badge = $('#slotStatus');
+
+                if (startH < 8 || endH > 18) {
+                    badge.removeClass('bg-secondary bg-success').addClass('bg-danger').text('Outside working hours!');
+                } else if (startH >= endH) {
+                    badge.removeClass('bg-secondary bg-success').addClass('bg-warning text-dark').text('Invalid time range');
+                } else {
+                    badge.removeClass('bg-secondary bg-danger bg-warning text-dark').addClass('bg-success').text('Within working hours ✓');
+                }
+            }
+
+            // Availability check
             function checkAvailability() {
                 var roomId = $('#roomSelect').val();
                 var start = $('#startTime').val();
                 var end = $('#endTime').val();
+
+                checkWorkingHours();
 
                 if (!roomId || !start || !end) return;
 

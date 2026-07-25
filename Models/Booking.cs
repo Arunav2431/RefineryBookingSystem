@@ -21,8 +21,14 @@ namespace RefineryBooking.Models
         [Required, StringLength(150)]
         public string MeetingTitle { get; set; } = string.Empty;
 
+        [Required, StringLength(100)]
+        public string OrganizerName { get; set; } = string.Empty;
+
         [Required, StringLength(50)]
         public string Department { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string CostCentre { get; set; } = string.Empty;
 
         [Required]
         public DateTime StartTime { get; set; }
@@ -34,6 +40,12 @@ namespace RefineryBooking.Models
         public int ExpectedAttendees { get; set; }
 
         public bool RequiresCatering { get; set; }
+
+        [StringLength(1000)]
+        public string? Remarks { get; set; }
+
+        [StringLength(300)]
+        public string? AttachmentPath { get; set; }
 
         public BookingStatus Status { get; set; } = BookingStatus.Pending;
 

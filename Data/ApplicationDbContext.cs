@@ -124,10 +124,16 @@ namespace RefineryBooking.Data
 
             // --- SEED CONFERENCE ROOMS ---
             builder.Entity<ConferenceRoom>().HasData(
-                new ConferenceRoom { Id = 1, Name = "North Gate Boardroom", BuildingLocation = "Admin Block A, Floor 3", Capacity = 24, HasVideoConferencing = true, HasProjector = true, HasWhiteboard = true, IsActive = true },
-                new ConferenceRoom { Id = 2, Name = "Catalytic Cracker Briefing Room", BuildingLocation = "Plant 2 Operations Center", Capacity = 12, HasVideoConferencing = false, HasProjector = true, HasWhiteboard = true, IsActive = true },
-                new ConferenceRoom { Id = 3, Name = "Safety & HAZMAT Training Hall", BuildingLocation = "Visitor Center, Ground Floor", Capacity = 60, HasVideoConferencing = true, HasProjector = true, HasWhiteboard = true, IsActive = true },
-                new ConferenceRoom { Id = 4, Name = "Pipeline Engineering Hub", BuildingLocation = "Technical Services Bldg", Capacity = 8, HasVideoConferencing = true, HasProjector = false, HasWhiteboard = true, IsActive = true }
+                new ConferenceRoom { Id = 1, Name = "North Gate Boardroom",                BuildingLocation = "Admin Block A, Floor 3",          Capacity = 24, HasVideoConferencing = true,  HasProjector = true,  HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 2, Name = "Catalytic Cracker Briefing Room",    BuildingLocation = "Plant 2 Operations Center",       Capacity = 12, HasVideoConferencing = false, HasProjector = true,  HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 3, Name = "Safety & HAZMAT Training Hall",       BuildingLocation = "Visitor Center, Ground Floor",    Capacity = 60, HasVideoConferencing = true,  HasProjector = true,  HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 4, Name = "Pipeline Engineering Hub",            BuildingLocation = "Technical Services Bldg",         Capacity = 8,  HasVideoConferencing = true,  HasProjector = false, HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 5, Name = "Executive Strategy Suite",            BuildingLocation = "HQ Tower, Floor 5",               Capacity = 16, HasVideoConferencing = true,  HasProjector = true,  HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 6, Name = "Refinery Operations War Room",        BuildingLocation = "Central Control Building",        Capacity = 30, HasVideoConferencing = true,  HasProjector = true,  HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 7, Name = "HSE Training Auditorium",             BuildingLocation = "Safety Block, Ground Floor",      Capacity = 120,HasVideoConferencing = true,  HasProjector = true,  HasWhiteboard = false, IsActive = true },
+                new ConferenceRoom { Id = 8, Name = "Turnaround Planning Room",            BuildingLocation = "Maintenance Bldg, Floor 1",       Capacity = 20, HasVideoConferencing = false, HasProjector = true,  HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 9, Name = "IT & Instrumentation Lab",            BuildingLocation = "IT Services Block",               Capacity = 10, HasVideoConferencing = true,  HasProjector = false, HasWhiteboard = true,  IsActive = true },
+                new ConferenceRoom { Id = 10,Name = "Logistics & Dispatch Conference Room",BuildingLocation = "Warehouse Block B, Floor 2",      Capacity = 14, HasVideoConferencing = false, HasProjector = true,  HasWhiteboard = true,  IsActive = true }
             );
         }
     }

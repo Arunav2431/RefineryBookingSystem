@@ -1,4 +1,4 @@
-﻿@model IEnumerable<RefineryBooking.Models.Booking>
+@model IEnumerable<RefineryBooking.Models.Booking>
 @{
     ViewData["Title"] = "Operations Dashboard";
     var isAdmin = User.IsInRole("Admin");
@@ -182,57 +182,109 @@
     </div>
 }
 
-<!-- ================= UNIVERSAL SCHEDULE TABLE (Shows for Everyone) ================= -->
-<div class="card card-industrial shadow-sm">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold" style="color: var(--refinery-navy);"><i class="fa-solid fa-calendar-check text-success me-2"></i> Your Immediate Upcoming Schedule</h5>
-        <a asp-controller="Booking" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All My History</a>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr><th>Meeting Title</th><th>Conference Room</th><th>Time Slot</th><th>Attendees</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-calendar-day fa-2x mb-3 d-block text-secondary"></i>
-                                You have no upcoming bookings scheduled for the remainder of the week.<br />
-                                Click <strong>New Room Request</strong> above to secure a conference space!
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td class="fw-bold text-dark">@item.MeetingTitle</td>
-                            <td><span class="badge bg-secondary"><i class="fa-solid fa-door-closed me-1"></i> @item.ConferenceRoom?.Name</span></td>
-                            <td>
-                                <div class="fw-semibold">@item.StartTime.ToString("MMM dd, yyyy")</div>
-                                <div class="text-muted small">@item.StartTime.ToString("HH:mm") - @item.EndTime.ToString("HH:mm")</div>
-                            </td>
-                            <td>@item.ExpectedAttendees people</td>
-                            <td>
-                                @switch (item.Status)
-                                {
-                                    case RefineryBooking.Models.BookingStatus.Approved:
-                                        <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Approved</span>
-                                        break;
-                                    case RefineryBooking.Models.BookingStatus.Pending:
-                                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-hourglass-half me-1"></i> Pending Review</span>
-                                        break;
-                                    case RefineryBooking.Models.BookingStatus.Rejected:
-                                        <span class="badge bg-danger" title="Reason: @item.RejectionReason"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
-                                        break;
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<!-- ================= UNIVERSAL SCHEDULE (Shows for Everyone) ================= -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0" style="color: var(--refinery-navy);">
+        <i class="fa-solid fa-calendar-check text-success me-2"></i> Your Upcoming Schedule
+    </h5>
+    <a asp-controller="Booking" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All My History</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card card-industrial text-center py-5">
+        <div class="card-body">
+            <i class="fa-solid fa-calendar-day fa-2x mb-3 d-block text-secondary"></i>
+            <p class="text-muted mb-0">You have no upcoming bookings. Click <strong>New Room Request</strong> above to get started!</p>
         </div>
     </div>
-</div>
+}
+else
+{
+    <div class="d-flex flex-column gap-2">
+        @foreach (var item in Model)
+        {
+            var statusBadge = item.Status == RefineryBooking.Models.BookingStatus.Approved ? "bg-success" :
+                              item.Status == RefineryBooking.Models.BookingStatus.Pending ? "bg-warning text-dark" :
+                              item.Status == RefineryBooking.Models.BookingStatus.Rejected ? "bg-danger" : "bg-dark";
+            var statusLabel = item.Status == RefineryBooking.Models.BookingStatus.Approved ? "Approved" :
+                              item.Status == RefineryBooking.Models.BookingStatus.Pending ? "Pending" :
+                              item.Status == RefineryBooking.Models.BookingStatus.Rejected ? "Rejected" : "Cancelled";
+
+            <div class="card card-industrial shadow-sm border-start border-4 @(item.Status == RefineryBooking.Models.BookingStatus.Approved ? "border-success" : item.Status == RefineryBooking.Models.BookingStatus.Pending ? "border-warning" : "border-danger")">
+                <div class="card-header bg-white py-3 d-flex align-items-center gap-3"
+                     style="cursor:pointer;" onclick="toggleHome(@item.Id)">
+                    <span class="badge bg-dark px-2 py-2 font-monospace">BKG-@item.Id</span>
+                    <span class="badge @statusBadge px-2 py-2">@statusLabel</span>
+                    <div class="flex-grow-1 ms-1">
+                        <strong class="text-dark">@item.MeetingTitle</strong>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                        <span class="small text-muted">
+                            <i class="fa-solid fa-door-closed me-1"></i>@item.ConferenceRoom?.Name
+                        </span>
+                        <span class="small text-muted">
+                            <i class="fa-solid fa-clock me-1"></i>@item.StartTime.ToString("MMM dd, HH:mm") – @item.EndTime.ToString("HH:mm")
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-muted home-toggle-@item.Id" style="transition:transform 0.2s;"></i>
+                    </div>
+                </div>
+                <div id="home-details-@item.Id" class="collapse">
+                    <div class="card-body pt-3 pb-3">
+                        <div class="row g-3 small">
+                            <div class="col-md-4">
+                                <span class="text-muted">Organizer:</span> <strong>@item.OrganizerName</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted">Department:</span> @item.Department
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted">Cost Centre:</span> @item.CostCentre
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted">Participants:</span> @item.ExpectedAttendees people
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted">Hall:</span> @item.ConferenceRoom?.BuildingLocation
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(item.Remarks))
+                            {
+                                <div class="col-12">
+                                    <span class="text-muted">Remarks:</span> <em>@item.Remarks</em>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.AttachmentPath))
+                            {
+                                <div class="col-12">
+                                    <a href="@item.AttachmentPath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa-solid fa-paperclip me-1"></i> View Attachment
+                                    </a>
+                                </div>
+                            }
+                            @if (item.Status == RefineryBooking.Models.BookingStatus.Rejected && !string.IsNullOrEmpty(item.RejectionReason))
+                            {
+                                <div class="col-12">
+                                    <div class="alert alert-danger py-2 mb-0 small">
+                                        <i class="fa-solid fa-ban me-1"></i> <strong>Rejection Reason:</strong> @item.RejectionReason
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function toggleHome(id) {
+            var details = document.getElementById('home-details-' + id);
+            var icon = document.querySelector('.home-toggle-' + id);
+            var bsCollapse = bootstrap.Collapse.getOrCreateInstance(details);
+            bsCollapse.toggle();
+            icon.style.transform = details.classList.contains('show') ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    </script>
+}
