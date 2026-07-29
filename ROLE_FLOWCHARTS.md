@@ -96,12 +96,8 @@ title: ALLOCATOR — Managing & Approving Bookings (Hall-Specific)
 flowchart TD
     A([START]) --> B[/Log in as Allocator/]
     B --> C[Land on Allocator Dashboard]
-    C --> D{Has Admin Assigned Any Halls?}
-
-    D -- No --> E[/Show Warning: Contact Admin to Assign Halls/]
-    E --> Z([END])
-
-    D -- Yes --> F[/View Bookings Filtered by Assigned Halls Only/]
+    C --> F[/View Bookings Filtered by Pre-Assigned Halls\n(Assigned during Account Creation)/]
+    
     F --> G{Are There Pending Bookings?}
 
     G -- No --> H[/Dashboard Shows: No Action Required/]
@@ -139,8 +135,8 @@ flowchart TD
     classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
     class A,Z startEnd;
     class C,I,N,R process;
-    class D,G,J,M,Q,S decision;
-    class B,E,F,H,K,L,O,P,T,U io;
+    class G,J,M,Q,S decision;
+    class B,F,H,K,L,O,P,T,U io;
 ```
 ##### END OF ALLOCATOR FLOWCHART
 
@@ -233,7 +229,7 @@ flowchart TD
     D -- "Manage Halls" --> R[Go to Halls Panel]
     R --> S{Select Action}
     S -- "Add Hall" --> T[/Enter Hall Details & Capacity/]
-    T --> U[/Select Cost Centre & Department/]
+    T --> U[/Select Cost Centre (Searchable Dropdown) & Dept/]
     U --> V[System Auto-Generates HallCode]
     V --> W[/Save Hall to Database/]
     W --> R
