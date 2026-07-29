@@ -41,19 +41,20 @@ namespace RefineryBooking.Controllers
                 return View();
             }
 
-            // ── STEP 1: Try local Identity store ────────────────────────────
-            // This covers seeded system accounts: sys.admin, sarah.jenkins, marcus.vance
-            // and any Admin/ITFM/Allocator accounts created by the admin panel.
-            var localResult = await _signInManager.PasswordSignInAsync(
-                userId, password, isPersistent: false, lockoutOnFailure: false);
+            // ── STEP 1: Emergency Local Fallback (Strictly for System Admin) ─────
+            // If the company server is down or credentials fail, we ONLY allow
+            // the emergency 'sys.admin' account to authenticate locally.
+            if (userId.Equals("sys.admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var localResult = await _signInManager.PasswordSignInAsync(
+                    userId, password, isPersistent: false, lockoutOnFailure: false);
 
-            if (localResult.Succeeded)
-                return RedirectToLocal(returnUrl);
+                if (localResult.Succeeded)
+                    return RedirectToLocal(returnUrl);
+            }
 
             // ── STEP 2: Try company server authentication ────────────────────
-            // Validates credentials against AD/LDAP/HR API.
-            // On success, also returns the employee's Full Name, Department, Email
-            // directly from the company directory — no manual entry needed.
+            // In Strict AD Mode, all regular users MUST authenticate via the company server.
             var companyProfile = await _companyAuth.ValidateAndGetProfileAsync(userId, password);
 
             if (companyProfile != null)
@@ -102,7 +103,7 @@ namespace RefineryBooking.Controllers
                 return RedirectToLocal(returnUrl);
             }
 
-            // ── Both local and company auth failed ───────────────────────────
+            // If both fail:
             ModelState.AddModelError("", "Invalid username or password.");
             return View();
         }

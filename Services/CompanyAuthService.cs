@@ -118,6 +118,24 @@ namespace RefineryBooking.Services
             // TODO: Replace with LDAP Bind / REST API / HR DB call.
             // See header comments for Option A, B, C integration guide.
             // ─────────────────────────────────────────────────────────────────
+            
+            // [MOCK IMPLEMENTATION FOR DEVELOPMENT]
+            // Allow seeded users to authenticate since AD is not connected yet.
+            if (password == "Admin123!") // The password used in database seeding
+            {
+                return new CompanyUserProfile
+                {
+                    EmployeeId = employeeId,
+                    FullName = employeeId.Equals("sys.admin", StringComparison.OrdinalIgnoreCase) ? "System Administrator" :
+                               employeeId.Equals("sarah.jenkins", StringComparison.OrdinalIgnoreCase) ? "Sarah Jenkins" :
+                               employeeId.Equals("marcus.vance", StringComparison.OrdinalIgnoreCase) ? "Marcus Vance" :
+                               employeeId.Equals("itfm.manager", StringComparison.OrdinalIgnoreCase) ? "ITFM Manager" : "Test User",
+                    Department = employeeId.Equals("sarah.jenkins", StringComparison.OrdinalIgnoreCase) ? "HR" :
+                                 employeeId.Equals("marcus.vance", StringComparison.OrdinalIgnoreCase) ? "Facilities" :
+                                 employeeId.Equals("itfm.manager", StringComparison.OrdinalIgnoreCase) ? "IT" : "General"
+                };
+            }
+
             _logger.LogInformation(
                 "CompanyAuthService: Company server not yet configured. " +
                 "Employee '{EmployeeId}' cannot be authenticated via company network.",
