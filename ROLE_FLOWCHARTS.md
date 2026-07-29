@@ -2,7 +2,10 @@
 ## NRL Conference Hall Booking System
 
 > All flowcharts use standard notation:
-> **Ovals** = Start / End &nbsp;|&nbsp; **Rectangles** = Process &nbsp;|&nbsp; **Diamonds** = Decision &nbsp;|&nbsp; **Parallelograms** = Input / Output
+> **([ ])** = Start / End / Connectors
+> **[ ]** = Process / Action
+> **{ }** = Decision / Logic Check
+> **[/ /]** = Input / Output / Data Read/Write
 
 ---
 
@@ -10,103 +13,105 @@
 
 ```mermaid
 flowchart TD
-    A([START]) --> B[/Open browser &\ngo to system URL/]
-    B --> C[Enter Windows Username\n+ Password]
-    C --> D{Valid credentials?}
+    A([START]) --> B[/Open Browser & Go to System URL/]
+    B --> C[/Enter Windows Username & Password/]
+    C --> D{Valid Credentials?}
 
-    D -- No --> E[/Show error:\nInvalid credentials/]
+    D -- No --> E[/Show Error: Invalid Credentials/]
     E --> C
 
-    D -- Yes: First-ever login --> F[System auto-creates\nUser account\nName & Dept from company server]
-    D -- Yes: Returning user --> G[Profile refreshed\nfrom company server]
-    F --> H[Redirect to Home Dashboard]
-    G --> H
+    D -- Yes --> F{Is First-Time Login?}
+    F -- Yes --> G[System Auto-Creates User Account\nFetches Name & Dept from Company Server]
+    F -- No --> H[System Updates Profile\nfrom Company Server]
+    
+    G --> I[Redirect to Home Dashboard]
+    H --> I
 
-    H --> I{What does user want?}
+    I --> J{What does user want to do?}
 
-    I -- View my bookings --> J[Click My Bookings]
-    J --> K[/List of all bookings\nwith status/]
-    K --> L{Cancel a booking?}
-    L -- Yes --> M[Click Cancel on\nan upcoming booking]
-    M --> N[/Booking marked Cancelled/]
-    N --> Z([END])
-    L -- No --> Z
+    %% Path: View Bookings
+    J -- "View My Bookings" --> K[Click 'My Bookings']
+    K --> L[/System Displays List of Bookings with Status/]
+    L --> M{Does User Want to Cancel a Booking?}
+    M -- Yes --> N{Is Booking Still Upcoming?}
+    N -- Yes --> O[Click 'Cancel']
+    N -- No --> P[/Cancellation Blocked/]
+    O --> Q[/Booking Status Marked 'Cancelled'/]
+    Q --> Z([END])
+    M -- No --> Z
+    P --> Z
 
-    I -- Make a booking --> O[Click Book a Room\nor use Calendar]
-    O --> P[/Select Conference Room/]
-    P --> Q[/Enter Date, Start Time,\nEnd Time/]
-    Q --> R{Time slot available?}
-    R -- No: Conflict detected --> S[/Show conflict warning/]
-    S --> Q
-    R -- Yes --> T[/Enter Purpose &\nExpected Attendees/]
-    T --> U{Need IT or AV\nequipment?}
-    U -- Yes --> V[/Fill IT Requirements form:\nLaptop, Projector, Mic,\nVideo Conf, Recording/]
-    V --> W[Submit Booking]
-    U -- No --> W
-    W --> X[/Booking created:\nStatus = Pending/]
-    X --> Y[/Await Allocator Approval\nNotification sent/]
-    Y --> AA{Allocator decision?}
-    AA -- Approved --> AB[/Status = Approved\nUser can attend/]
-    AA -- Rejected --> AC[/Status = Rejected\nReason shown to user/]
-    AB --> Z
-    AC --> Z
+    %% Path: Make a Booking
+    J -- "Make a Booking" --> R[Click 'Book a Room' or Use Calendar]
+    R --> S[/Select Conference Room (Searchable Dropdown)/]
+    S --> T[/Select Cost Centre (Searchable Dropdown)/]
+    T --> U[/Enter Date, Start Time, End Time/]
+    U --> V{Is Time Slot Available?}
+    V -- "No (Conflict Detected)" --> W[/Display Conflict Warning/]
+    W --> U
+    
+    V -- "Yes" --> X[/Enter Purpose & Expected Attendees/]
+    X --> Y{Need IT or AV Equipment?}
+    Y -- Yes --> AA[/Fill IT Requirements (Video Conf, Projector, etc.)/]
+    AA --> AB[Submit Booking]
+    Y -- No --> AB
+    
+    AB --> AC[/Booking Created:\nStatus = Pending/]
+    AC --> AD[/System Notifies Assigned Allocator(s)/]
+    
+    AD --> AE{Allocator Decision?}
+    AE -- Approved --> AF[/Status = Approved\nUser Notified/]
+    AE -- Rejected --> AG[/Status = Rejected\nReason Shown to User/]
+    
+    AF --> Z
+    AG --> Z
 ```
 
 ---
 
 ## 2. ALLOCATOR — Managing & Approving Bookings (Hall-Specific)
 
-> **Key Rule:** Each Allocator is assigned to specific halls by Admin at account creation.
-> They ONLY see bookings for their assigned halls. One hall can have multiple allocators.
+> **Key Rule:** Each Allocator is assigned to specific halls by an Admin. They ONLY see bookings for their assigned halls.
 
 ```mermaid
 flowchart TD
-    A([START]) --> B[Log in with\nWindows Username + Password]
+    A([START]) --> B[/Log in as Allocator/]
     B --> C[Land on Allocator Dashboard]
-    C --> D{Has hall\nassignments?}
+    C --> D{Has Admin Assigned Any Halls?}
 
-    D -- No: Admin has not assigned halls --> E[/Show warning:\nContact Admin to assign halls/]
+    D -- No --> E[/Show Warning: Contact Admin to Assign Halls/]
     E --> Z([END])
 
-    D -- Yes --> F[/View ONLY bookings for\nassigned halls\nFiltered automatically/]
-    F --> G{Any bookings\npending review?}
+    D -- Yes --> F[/View Bookings Filtered by Assigned Halls Only/]
+    F --> G{Are There Pending Bookings?}
 
-    G -- No --> H[/Dashboard shows:\nAll clear for assigned halls/]
+    G -- No --> H[/Dashboard Shows: No Action Required/]
     H --> Z
 
-    G -- Yes --> I[Click on a booking\nto view Details]
-    I --> J{Booking is for\nan assigned hall?}
-    J -- No: Access denied --> K[/403 Forbidden\nNot your assigned hall/]
+    G -- Yes --> I[Click on a Pending Booking for Details]
+    I --> J{Is Booking For an Assigned Hall?}
+    J -- No --> K[/Error: 403 Forbidden/]
     K --> Z
 
-    J -- Yes --> L[/Read booking details:\nRoom, Date, Time,\nPurpose, Attendees/]
-    L --> M{Is there a\ntime/room conflict?}
+    J -- Yes --> L[/Review Details: Time, Purpose, Attendees/]
+    L --> M{Is Booking Valid & No Conflicts?}
 
-    M -- Yes --> N[Reject the booking]
-    N --> O[/Enter rejection reason\ne.g. Double booking/]
-    O --> P[/Status = Rejected\nUser notified/]
-    P --> Q{More pending\nbookings?}
+    M -- "No (Reject)" --> N[Click Reject]
+    N --> O[/Enter Rejection Reason/]
+    O --> P[/Status = Rejected\nUser Notified/]
+    P --> Q{More Pending Bookings?}
 
-    M -- No --> R{Booking valid\nand appropriate?}
-    R -- No --> N
+    M -- "Yes (Approve)" --> R[Click Approve]
+    R --> S{Does Booking Have IT/AV Requirements?}
 
-    R -- Yes --> S[Click Approve]
-    S --> T{Does booking have\nIT/AV requirements?}
+    S -- Yes --> T[/Status = Approved\nFlag for ITFM Team\nNotify User & ITFM/]
+    T --> Q
 
-    T -- Yes --> U[/System flags booking\nfor ITFM team/]
-    U --> V[/Status = Approved\nIT ticket created\nITFM notified/]
-    V --> Q
-
-    T -- No --> W[/Status = Approved\nUser notified/]
-    W --> Q
+    S -- No --> U[/Status = Approved\nNotify User/]
+    U --> Q
 
     Q -- Yes --> I
-    Q -- No --> X[Block a room\nfor maintenance?]
-    X -- Yes --> Y[Go to Hall Blocks]
-    Y --> AA[/Select room, date range,\nenter reason/]
-    AA --> AB[/Room blocked:\nno bookings allowed\nin this period/]
-    AB --> Z
-    X -- No --> Z
+    Q -- No --> Z
 ```
 
 ---
@@ -115,31 +120,31 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A([START]) --> B[Log in with\nWindows Username + Password]
+    A([START]) --> B[/Log in as ITFM/]
     B --> C[Land on ITFM Dashboard]
-    C --> D[/View list of Approved bookings\nthat have IT requirements/]
-    D --> E{Any bookings\nwith IT needs?}
+    C --> D[/System Displays Approved Bookings with IT Requirements/]
+    D --> E{Any Pending IT Tasks?}
 
-    E -- No --> F[/Dashboard shows:\nNo IT tasks pending/]
+    E -- No --> F[/Dashboard Shows: No IT Tasks Pending/]
     F --> Z([END])
 
-    E -- Yes --> G[Click on a booking\nto view IT Details]
-    G --> H[/Read IT Requirements:\nLaptop needed?\nProjector needed?\nVideo Conferencing?\nMicrophone?\nRecording?\nSpecial Instructions?/]
+    E -- Yes --> G[Click on a Booking to View IT Details]
+    G --> H[/Review Specific Needs (Laptop, Mic, etc.)/]
+    H --> I[Physically Prepare Equipment in the Room]
+    
+    I --> J{Is Equipment Ready and Tested?}
 
-    H --> I[Physically prepare the\nrequested equipment\nin the conference room]
-    I --> J{Equipment ready &\nall items confirmed?}
+    J -- "No (Issue Found)" --> K[Click 'Mark NOT Ready']
+    K --> L[/Log the Issue/Reason/]
+    L --> M[/System Flags Booking\nNotifies Admin & Allocator/]
+    M --> N{More Bookings to Handle?}
 
-    J -- No: Issue found --> K[/Click Mark NOT Ready\nLog the issue/]
-    K --> L[/Booking flagged:\nITFM notified Admin\nand Allocator/]
-    L --> M{More bookings\nto handle?}
+    J -- "Yes (Ready)" --> O[Click 'Mark Ready']
+    O --> P[/Booking IT Status Updated to Ready/]
+    P --> N
 
-    J -- Yes --> N[/Click Mark Ready/]
-    N --> O[/Booking status updated:\nIT confirmed as ready/]
-    O --> P[/User and Allocator\ncan see IT is prepared/]
-    P --> M
-
-    M -- Yes --> G
-    M -- No --> Z
+    N -- Yes --> G
+    N -- No --> Z
 ```
 
 ---
@@ -148,86 +153,87 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A([START]) --> B[Log in as sys.admin\nor any Admin account]
-    B --> C[Admin Dashboard]
-    C --> D{Which task?}
+    A([START]) --> B[/Log in as Admin/]
+    B --> C[Land on Admin Dashboard]
+    C --> D{Select Administrative Task}
 
-    D -- Manage Users --> E[Go to Admin Panel > Users]
-    E --> F[/View all users:\nName, Username, Role, Status/]
-    F --> G{Action needed?}
+    %% Manage Users
+    D -- "Manage Users" --> E[Go to Users Panel]
+    E --> F{Select Action}
+    
+    F -- "Create System Account" --> G[/Enter Details (Username, Role, Dept)/]
+    G --> H{Is Role Allocator?}
+    H -- Yes --> I[/Assign Conference Halls (Checkbox List)/]
+    I --> J[Save Account]
+    H -- No --> J
+    J --> K[/Account Created/]
+    K --> E
+    
+    F -- "Edit Role/Status" --> L[Select User]
+    L --> M{What to Edit?}
+    M -- "Change Role" --> N[/Select New Role/]
+    M -- "Deactivate" --> O[/Lock Account/]
+    M -- "Reactivate" --> P[/Unlock Account/]
+    M -- "Manage Allocator Halls" --> Q[/Update Assigned Halls/]
+    N --> E
+    O --> E
+    P --> E
+    Q --> E
 
-    G -- Create new\nAdmin/ITFM/Allocator --> H[Click Create System Account]
-    H --> I[/Enter: Full Name,\nWindows Username,\nBadge ID, Department,\nRole, Initial Password/]
-    I --> J[/Account created:\nPerson can log in immediately/]
-    J --> K{More user tasks?}
+    %% Manage Halls
+    D -- "Manage Halls" --> R[Go to Halls Panel]
+    R --> S{Select Action}
+    S -- "Add Hall" --> T[/Enter Hall Details & Capacity/]
+    T --> U[/Select Cost Centre & Department/]
+    U --> V[System Auto-Generates HallCode]
+    V --> W[/Save Hall to Database/]
+    W --> R
+    S -- "Edit Hall" --> X[/Update Details/] --> R
+    S -- "Toggle Status" --> Y[/Mark Hall Active/Inactive/] --> R
 
-    G -- Change someone's role --> L[Select new role\nfrom dropdown]
-    L --> M[/Role updated\nAccess changes immediately/]
-    M --> K
+    %% Manage Cost Centres
+    D -- "Manage Cost Centres" --> CA[Go to Cost Centres Panel]
+    CA --> CB{Select Action}
+    CB -- "Add Cost Centre" --> CC[/Enter Code & Name/] --> CD[/Save to Database/] --> CA
+    CB -- "Edit Cost Centre" --> CE[/Update Name/Description/] --> CA
+    CB -- "Toggle Status" --> CF[/Mark Active/Inactive/] --> CA
 
-    G -- Deactivate user --> N[Click Deactivate]
-    N --> O[/Account locked:\nUser cannot log in/]
-    O --> K
+    %% View Booking History / Block Halls
+    D -- "Booking History" --> BA[Go to Booking History]
+    BA --> BB[/View All System Bookings/]
+    BB --> BC{Cancel a Booking?}
+    BC -- Yes --> BD[Click Cancel] --> BE[/Booking Cancelled\nAudit Log Created/] --> BA
+    BC -- No --> BA
 
-    G -- Reactivate user --> P[Click Reactivate]
-    P --> Q[/Account unlocked:\nUser can log in again/]
-    Q --> K
-
-    K -- Yes --> F
-    K -- No --> D
-
-    D -- Booking History --> R[Go to Admin > Booking History]
-    R --> S[/View all bookings:\nsearchable by hall name,\npaginated list/]
-    S --> T{Cancel a booking?}
-    T -- Yes --> U[Click Cancel on booking]
-    U --> V[/Booking cancelled\nAudit log created\nUser can see status change/]
-    V --> D
-    T -- No --> D
-
-    D -- Block a Hall --> W[Go to Hall Blocks > Create]
-    W --> X[/Select room, date range,\nenter reason\ne.g. Annual Maintenance/]
-    X --> Y[/Room blocked:\nNo new bookings allowed\nin this period/]
-    Y --> D
-
-    D -- Done --> Z([END])
+    D -- "Logout" --> Z([END])
 ```
 
 ---
 
-## 5. AUTHENTICATION FLOW — How Login Works for All Users
+## 5. AUTHENTICATION FLOW — System Wide
 
 ```mermaid
 flowchart TD
-    A([USER OPENS LOGIN PAGE]) --> B[/Enter Windows Username\nEnter Password/]
+    A([USER/ADMIN/ITFM OPENS SYSTEM]) --> B[/Enter Windows Username & Password/]
     B --> C[Click Sign In]
-    C --> D{Check local\nIdentity DB}
+    C --> D{Check Local System Database}
 
-    D -- Found & password correct --> E[/Signed in via\nlocal Identity/]
+    D -- "Found & Password Matches" --> E[/User Authenticated via Local DB/]
     E --> F([REDIRECT TO DASHBOARD])
 
-    D -- Not found or\nwrong password --> G{Check Company Server\nvia CompanyAuthService}
+    D -- "Not Found or Incorrect" --> G{Check Company Directory Server\n(via CompanyAuthService)}
 
-    G -- STUB: Currently returns null --> H[/Show error:\nInvalid username or password/]
+    G -- "Credentials Invalid" --> H[/Show Error: Invalid Username or Password/]
     H --> B
 
-    G -- LDAP/REST connected: Credentials valid --> I{Is this user\nnew to this system?}
+    G -- "Credentials Valid" --> I{Does Local Account Exist?}
 
-    I -- Yes: First login --> J[Auto-create local account]
-    J --> K[/UserName = windows username\nFullName = from company server\nDepartment = from company server\nRole = User/]
-    K --> L[/Signed in/]
+    I -- "No (First Login)" --> J[System Auto-Creates Local Account]
+    J --> K[/Extract Name & Department from Server/]
+    K --> L[/Save as Default 'User' Role/]
     L --> F
 
-    I -- No: Returning user --> M[Update local profile\nfrom company server]
-    M --> N[/FullName refreshed\nDepartment refreshed/]
-    N --> L
-
-    G -- Credentials invalid --> H
+    I -- "Yes (Returning User)" --> M[System Updates Local Profile]
+    M --> N[/Sync Name & Department Changes from Server/]
+    N --> F
 ```
-
----
-
-*Generated for NRL Conference Hall Booking System*
-*All four roles (Admin, Allocator, ITFM, User) plus authentication flow*
-
-
-
