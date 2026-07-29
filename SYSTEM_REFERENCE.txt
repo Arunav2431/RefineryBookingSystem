@@ -51,21 +51,31 @@
 
   Controllers/AdminController.cs
     Feature: Admin Panel
-    - Users()           -> List all system users and their roles
-    - CreateUser()      -> Create Admin, ITFM, or Allocator accounts
-                           (regular User accounts are auto-created)
-    - ChangeRole()      -> Change an existing user's role
-    - DeactivateUser()  -> Lock out a user account
-    - ReactivateUser()  -> Re-enable a locked account
-    - BookingHistory()  -> View all bookings (searchable, paginated)
-    - CancelBooking()   -> Force-cancel any active booking
+    - Users()                -> List all users; shows hall count badge for Allocators
+    - CreateUser()           -> Create Admin, ITFM, or Allocator accounts
+                                For Allocator: mandatory hall selection (checklist).
+                                Halls are assigned atomically with account creation.
+                                (regular User accounts are auto-created on login)
+    - ManageAllocatorHalls() -> View/update which halls an Allocator is assigned to.
+                                Admin can reassign halls at any time.
+    - ChangeRole()           -> Change an existing user's role
+    - DeactivateUser()       -> Lock out a user account
+    - ReactivateUser()       -> Re-enable a locked account
+    - BookingHistory()       -> View all bookings (searchable, paginated)
+    - CancelBooking()        -> Force-cancel any active booking
 
   Controllers/AllocatorController.cs
-    Feature: Booking Approval Workflow
-    - Index()    -> Dashboard: pending bookings needing review
-    - Details()  -> Full booking detail with approve/reject form
-    - Approve()  -> Approve booking; auto-creates IT ticket if needed
-    - Reject()   -> Reject booking with a written reason
+    Feature: Booking Approval Workflow (HALL-SCOPED)
+    Each allocator ONLY sees bookings for halls assigned to them by Admin.
+    Admin users bypass scoping and see all halls.
+    - Index()    -> Dashboard: pending bookings for ASSIGNED HALLS ONLY.
+                   Tab counts (pending/approved/rejected) also scoped.
+                   If no halls assigned: shows warning message.
+    - Details()  -> Full booking detail. Returns 403 if booking is for
+                   a hall not assigned to the current allocator.
+    - Approve()  -> Approve booking. 403 if hall not assigned.
+    - Reject()   -> Reject booking. 403 if hall not assigned.
+    - Export()   -> Excel export scoped to allocated halls only.
 
   Controllers/BookingController.cs
     Feature: Conference Room Booking (User-facing)
@@ -133,6 +143,19 @@
       Reason (e.g. "Annual Maintenance")
       CreatedByUserId
 
+  Models/AllocatorHallAssignment.cs  [NEW]
+    Many-to-many join table: Allocator <-> ConferenceRoom.
+    Fields:
+      AllocatorUserId  (FK -> AspNetUsers)
+      ConferenceRoomId (FK -> ConferenceRooms)
+      AssignedAt       (timestamp of assignment)
+      AssignedByUserId (Admin who made the assignment)
+    Unique index on (AllocatorUserId, ConferenceRoomId) to
+    prevent duplicate assignments.
+    One hall can have multiple allocators.
+    One allocator can be assigned to multiple halls (only if
+    explicitly assigned by Admin).
+
   Models/AuditLog.cs
     Audit trail for all significant actions:
       UserId, UserName, Action, EntityName, EntityId
@@ -180,8 +203,13 @@
     Added HallBlocks table and helpdesk fields.
 
   Migrations/20260729152032_UseWindowsUsernameLogin.cs
-    LATEST: Changed seed user UserNames from emails to Windows
-    domain usernames (sys.admin, sarah.jenkins, etc.)
+    Changed seed user UserNames from emails to Windows domain usernames.
+
+  Migrations/20260729154522_HallSpecificAllocators.cs  [LATEST]
+    Created AllocatorHallAssignments table with:
+      - FK to AspNetUsers (AllocatorUserId, CASCADE)
+      - FK to ConferenceRooms (ConferenceRoomId, CASCADE)
+      - Unique index on (AllocatorUserId, ConferenceRoomId)
 
 
 -- VIEWS/ --
@@ -190,10 +218,25 @@
 
   Views/Admin/UserList.cshtml
     Admin panel: all users table with role management buttons.
+    NEW: "Halls" column shows assignment count for Allocators:
+         - Green badge "3 halls" if assigned
+         - Orange warning "None" if no halls assigned
+    NEW: "Halls" button appears for Allocator rows -> ManageAllocatorHalls
+    Username column now shows Windows username (not email).
 
   Views/Admin/CreateUser.cshtml
     Form to create Admin, ITFM, or Allocator accounts.
-    Uses Windows Username field (no email).
+    Uses Windows Username field (no email/department - auto from company server).
+    When Allocator role is selected: a hall checklist appears dynamically.
+    Allocator MUST select at least one hall - form blocked otherwise.
+    Hall assignments saved atomically with account creation.
+
+  Views/Admin/ManageAllocatorHalls.cshtml  [NEW]
+    Hall assignment management page for a specific Allocator.
+    Shows checklist of all active conference rooms.
+    Currently assigned halls are pre-checked and highlighted.
+    Admin can add/remove halls at any time after account creation.
+    Includes Select All / Clear All helpers and room detail cards.
 
   Views/Admin/BookingHistory.cshtml
     Full booking history with search and pagination. Admin can
@@ -415,3 +458,4 @@ NOTE: Regular employees (User role) never need manual creation.
   END OF DOCUMENT
   NRL Conference Hall Booking System
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
