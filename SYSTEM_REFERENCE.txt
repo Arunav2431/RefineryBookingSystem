@@ -51,6 +51,10 @@
 
   Controllers/AdminController.cs
     Feature: Admin Panel
+    - Halls()                -> List all conference rooms [NEW]
+    - AddHall()              -> Create new room with auto-generated HallCode [NEW]
+    - EditHall()             -> Update room details [NEW]
+    - ToggleHall()           -> Activate/Deactivate room. Blocked if room has upcoming approved bookings [NEW]
     - Users()                -> List all users; shows hall count badge for Allocators
     - CreateUser()           -> Create Admin, ITFM, or Allocator accounts
                                 For Allocator: mandatory hall selection (checklist).
@@ -458,4 +462,5 @@ NOTE: Regular employees (User role) never need manual creation.
   END OF DOCUMENT
   NRL Conference Hall Booking System
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 

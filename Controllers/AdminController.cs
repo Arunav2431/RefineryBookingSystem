@@ -313,6 +313,155 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(Users));
         }
 
+        // ── MANAGE HALLS (ADMIN) ─────────────────────────────────────────────
+
+        public async Task<IActionResult> Halls()
+        {
+            var halls = await _context.ConferenceRooms.OrderBy(h => h.Name).ToListAsync();
+            return View(halls);
+        }
+
+        public IActionResult AddHall()
+        {
+            ViewBag.Departments = GetDepartments();
+            return View();
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddHall(ConferenceRoom hall)
+        {
+            ViewBag.Departments = GetDepartments();
+
+            if (!ModelState.IsValid)
+                return View(hall);
+
+            // Validate CostCentre is numeric
+            if (!int.TryParse(hall.CostCentreCode, out _))
+            {
+                ModelState.AddModelError("CostCentreCode", "Cost Centre Code must be numeric.");
+                return View(hall);
+            }
+            hall.CostCentreCode = hall.CostCentreCode.PadLeft(4, '0');
+
+            // Generate HallCode if empty
+            if (string.IsNullOrWhiteSpace(hall.HallCode))
+            {
+                string deptPrefix = hall.OwnerDepartment.Length >= 3 ? hall.OwnerDepartment.Substring(0, 3).ToUpper() : "GEN";
+                int nextSeq = await _context.ConferenceRooms
+                    .Where(r => r.CostCentreCode == hall.CostCentreCode && r.OwnerDepartment == hall.OwnerDepartment)
+                    .CountAsync() + 1;
+                hall.HallCode = $"CC-{hall.CostCentreCode}-{deptPrefix}-{nextSeq:D2}";
+            }
+
+            // Ensure HallCode is unique
+            if (await _context.ConferenceRooms.AnyAsync(r => r.HallCode == hall.HallCode))
+            {
+                ModelState.AddModelError("HallCode", "This Hall Code already exists. Please modify it.");
+                return View(hall);
+            }
+
+            // Ensure Name is unique
+            if (await _context.ConferenceRooms.AnyAsync(r => r.Name.Trim().ToLower() == hall.Name.Trim().ToLower()))
+            {
+                ModelState.AddModelError("Name", "A hall with this name already exists.");
+                return View(hall);
+            }
+
+            hall.CreatedByUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            hall.CreatedAt = DateTime.UtcNow;
+            
+            _context.ConferenceRooms.Add(hall);
+            await _context.SaveChangesAsync();
+            
+            TempData["SuccessMessage"] = $"Hall '{hall.Name}' ({hall.HallCode}) added successfully.";
+            return RedirectToAction(nameof(Halls));
+        }
+
+        public async Task<IActionResult> EditHall(int id)
+        {
+            var hall = await _context.ConferenceRooms.FindAsync(id);
+            if (hall == null) return NotFound();
+            
+            ViewBag.Departments = GetDepartments();
+            return View(hall);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditHall(int id, ConferenceRoom model)
+        {
+            if (id != model.Id) return NotFound();
+            ViewBag.Departments = GetDepartments();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            if (!int.TryParse(model.CostCentreCode, out _))
+            {
+                ModelState.AddModelError("CostCentreCode", "Cost Centre Code must be numeric.");
+                return View(model);
+            }
+            model.CostCentreCode = model.CostCentreCode.PadLeft(4, '0');
+
+            if (await _context.ConferenceRooms.AnyAsync(r => r.Id != model.Id && r.HallCode == model.HallCode))
+            {
+                ModelState.AddModelError("HallCode", "This Hall Code already exists for another room.");
+                return View(model);
+            }
+
+            if (await _context.ConferenceRooms.AnyAsync(r => r.Id != model.Id && r.Name.Trim().ToLower() == model.Name.Trim().ToLower()))
+            {
+                ModelState.AddModelError("Name", "A hall with this name already exists.");
+                return View(model);
+            }
+
+            var hall = await _context.ConferenceRooms.FindAsync(id);
+            if (hall == null) return NotFound();
+
+            hall.Name = model.Name;
+            hall.HallCode = model.HallCode;
+            hall.OwnerDepartment = model.OwnerDepartment;
+            hall.CostCentreCode = model.CostCentreCode;
+            hall.BuildingLocation = model.BuildingLocation;
+            hall.FloorNumber = model.FloorNumber;
+            hall.Capacity = model.Capacity;
+            hall.Description = model.Description;
+            hall.HasProjector = model.HasProjector;
+            hall.HasVideoConferencing = model.HasVideoConferencing;
+            hall.HasWhiteboard = model.HasWhiteboard;
+
+            await _context.SaveChangesAsync();
+            
+            TempData["SuccessMessage"] = $"Hall '{hall.Name}' updated successfully.";
+            return RedirectToAction(nameof(Halls));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleHall(int id)
+        {
+            var hall = await _context.ConferenceRooms.FindAsync(id);
+            if (hall == null) return NotFound();
+
+            if (hall.IsActive)
+            {
+                // Check for upcoming approved bookings
+                var upcomingBookings = await _context.Bookings
+                    .Where(b => b.ConferenceRoomId == id && b.Status == BookingStatus.Approved && b.EndTime > DateTime.Now)
+                    .CountAsync();
+
+                if (upcomingBookings > 0)
+                {
+                    TempData["ErrorMessage"] = $"Cannot deactivate hall '{hall.Name}' because there are {upcomingBookings} upcoming approved booking(s). Please cancel them first or let them complete.";
+                    return RedirectToAction(nameof(Halls));
+                }
+            }
+
+            hall.IsActive = !hall.IsActive;
+            await _context.SaveChangesAsync();
+            
+            TempData["SuccessMessage"] = $"Hall '{hall.Name}' is now {(hall.IsActive ? "Active" : "Inactive")}.";
+            return RedirectToAction(nameof(Halls));
+        }
+
         private static List<string> GetDepartments() => new()
         {
             "Operations", "Engineering", "Maintenance", "HSE",

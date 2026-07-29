@@ -1,0 +1,143 @@
+@model RefineryBooking.Models.ConferenceRoom
+@{
+    ViewData["Title"] = "Add New Hall";
+    var depts = ViewBag.Departments as List<string> ?? new();
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-industrial">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold" style="color:var(--nrl-navy);">
+                    <i class="fa-solid fa-plus me-2"></i>Add New Conference Hall
+                </h5>
+                <a asp-action="Halls" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Back to Halls
+                </a>
+            </div>
+            <div class="card-body p-4">
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger py-2 small">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Please correct the errors below.
+                    </div>
+                }
+
+                <form asp-action="AddHall" method="post" id="addHallForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hall Name *</label>
+                            <input asp-for="Name" class="form-control" placeholder="e.g. Executive Strategy Suite" required />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hall Code</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-barcode text-muted small"></i></span>
+                                <input asp-for="HallCode" class="form-control font-monospace" placeholder="Auto-generated if left blank" />
+                            </div>
+                            <div class="form-text text-muted small">
+                                Auto-generated format: <code>CC-XXXX-DEP-01</code>
+                            </div>
+                            <span asp-validation-for="HallCode" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Owner Department *</label>
+                            <select asp-for="OwnerDepartment" class="form-select" required onchange="updateHallCodePreview()">
+                                <option value="">Select Department...</option>
+                                @foreach (var d in depts)
+                                {
+                                    <option value="@d">@d</option>
+                                }
+                            </select>
+                            <span asp-validation-for="OwnerDepartment" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Cost Centre Code *</label>
+                            <input asp-for="CostCentreCode" class="form-control font-monospace" placeholder="e.g. 1001" required pattern="[0-9]{1,4}" title="Numeric code up to 4 digits" onchange="updateHallCodePreview()" onkeyup="updateHallCodePreview()" />
+                            <span asp-validation-for="CostCentreCode" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Building / Location *</label>
+                            <input asp-for="BuildingLocation" class="form-control" placeholder="e.g. Admin Block A" required />
+                            <span asp-validation-for="BuildingLocation" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Floor</label>
+                            <input asp-for="FloorNumber" class="form-control" placeholder="e.g. 3, G, B1" />
+                            <span asp-validation-for="FloorNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Capacity *</label>
+                            <input asp-for="Capacity" type="number" min="1" max="500" class="form-control" value="10" required />
+                            <span asp-validation-for="Capacity" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold d-block mb-3">Available Equipment</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check form-switch">
+                                <input asp-for="HasProjector" class="form-check-input" type="checkbox" role="switch" />
+                                <label class="form-check-label" asp-for="HasProjector"><i class="fa-solid fa-video me-1"></i>Projector</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input asp-for="HasVideoConferencing" class="form-check-input" type="checkbox" role="switch" />
+                                <label class="form-check-label" asp-for="HasVideoConferencing"><i class="fa-solid fa-desktop me-1"></i>Video Conferencing</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input asp-for="HasWhiteboard" class="form-check-input" type="checkbox" role="switch" />
+                                <label class="form-check-label" asp-for="HasWhiteboard"><i class="fa-solid fa-chalkboard me-1"></i>Whiteboard</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Description / Notes</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Any specific details or instructions for this room..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                    
+                    <input type="hidden" asp-for="IsActive" value="true" />
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4">
+                        <a asp-action="Halls" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-nrl-primary px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i>Save New Hall
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function updateHallCodePreview() {
+            const codeInput = document.getElementById('HallCode');
+            // Only preview if user hasn't typed their own code
+            if (codeInput.value && !codeInput.value.startsWith('CC-')) return;
+            
+            const dept = document.getElementById('OwnerDepartment').value;
+            let cc = document.getElementById('CostCentreCode').value;
+            
+            if (dept && cc) {
+                // Pad CC to 4 digits
+                cc = cc.padStart(4, '0');
+                const deptPrefix = dept.length >= 3 ? dept.substring(0, 3).toUpperCase() : "GEN";
+                codeInput.value = `CC-${cc}-${deptPrefix}-XX`;
+            }
+        }
+    </script>
+}
