@@ -301,8 +301,9 @@ body.theme-dark .nav-item {
 body.theme-dark .nav-item:hover, body.theme-dark .nav-item.active {
     color: #fff !important;
 }
-body.theme-dark .logo-img {
-    filter: brightness(0) invert(1);
+body.theme-dark .logo-img,
+body.theme-yellow .logo-img {
+    filter: none !important;
 }
 
 body.theme-yellow {
@@ -327,6 +328,27 @@ body.theme-yellow a {
     color: #ffff00 !important;
     text-decoration: underline !important;
 }
-body.theme-yellow .logo-img {
-    filter: brightness(0) invert(1) sepia(100%) saturate(10000%) hue-rotate(20deg);
+
+/* Ensure Light Mode white icon retains its original white color in dark and high contrast modes */
+.theme-btn-light,
+.theme-btn-light *,
+body.theme-dark .theme-btn-light,
+body.theme-dark .theme-btn-light *,
+body.theme-yellow .theme-btn-light,
+body.theme-yellow .theme-btn-light *,
+body.theme-yellow a.theme-btn-light,
+body.theme-yellow a.theme-btn-light * {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+.theme-btn-light:hover,
+.theme-btn-light:hover *,
+body.theme-dark .theme-btn-light:hover,
+body.theme-dark .theme-btn-light:hover *,
+body.theme-yellow .theme-btn-light:hover,
+body.theme-yellow .theme-btn-light:hover *,
+body.theme-yellow a.theme-btn-light:hover,
+body.theme-yellow a.theme-btn-light:hover * {
+    color: var(--nrl-orange) !important;
 }

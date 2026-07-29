@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -49,7 +49,7 @@
                         <span>|</span>
                         <a href="#" style="color: inherit; text-decoration: none;" title="Accessibility"><i class="fa-solid fa-wheelchair"></i></a>
                         <span>|</span>
-                        <a href="#" onclick="setTheme('light'); return false;" style="color: inherit; text-decoration: none;" title="Default Theme"><i class="fa-solid fa-circle-half-stroke"></i></a>
+                        <a href="#" onclick="setTheme('light'); return false;" class="theme-btn-light" style="color: #ffffff; text-decoration: none;" title="Default Theme"><i class="fa-solid fa-circle-half-stroke"></i></a>
                         <a href="#" onclick="setTheme('yellow'); return false;" style="color: yellow; text-decoration: none; margin-left: 4px;" title="High Contrast Theme"><i class="fa-solid fa-circle-half-stroke"></i></a>
                         <span>|</span>
                         @if (User.Identity!.IsAuthenticated)
@@ -174,7 +174,19 @@
             if (theme !== 'light') {
                 body.classList.add('theme-' + theme);
             }
+            try {
+                localStorage.setItem('refinery_theme', theme);
+            } catch(e) {}
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                let savedTheme = localStorage.getItem('refinery_theme');
+                if (savedTheme) {
+                    setTheme(savedTheme);
+                }
+            } catch(e) {}
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
