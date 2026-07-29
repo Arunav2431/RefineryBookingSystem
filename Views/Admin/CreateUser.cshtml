@@ -90,27 +90,13 @@
                             An Allocator <strong>must be assigned to at least one hall</strong>.
                             They will only see and approve bookings for their assigned halls.
                         </div>
-                        <div class="row g-2">
-                            @foreach (var room in allRooms)
-                            {
-                                <div class="col-md-6">
-                                    <div class="form-check p-2 rounded border border-light" id="hcard-@room.Id">
-                                        <input class="form-check-input hall-checkbox"
-                                               type="checkbox"
-                                               name="selectedRoomIds"
-                                               value="@room.Id"
-                                               id="hroom-@room.Id"
-                                               onchange="toggleHallCard(@room.Id)" />
-                                        <label class="form-check-label w-100 small" for="hroom-@room.Id" style="cursor:pointer;">
-                                            <div class="fw-bold" style="color:var(--nrl-navy);">@room.Name</div>
-                                            <div class="text-muted" style="font-size:0.72rem;">
-                                                <i class="fa-solid fa-location-dot me-1"></i>@room.BuildingLocation
-                                                &nbsp;|&nbsp;<i class="fa-solid fa-users me-1"></i>@room.Capacity seats
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            }
+                        <div class="mb-2">
+                            <select class="form-control select2-halls" name="selectedRoomIds" id="selectedRoomIds" multiple="multiple" style="width: 100%;">
+                                @foreach (var room in allRooms)
+                                {
+                                    <option value="@room.Id">@room.Name (@room.BuildingLocation | @room.Capacity seats)</option>
+                                }
+                            </select>
                         </div>
                         <div id="hallError" class="text-danger small mt-2" style="display:none;">
                             <i class="fa-solid fa-triangle-exclamation me-1"></i>
@@ -154,8 +140,8 @@
     function validateForm() {
         const role = document.getElementById('roleSelect').value;
         if (role === 'Allocator') {
-            const checked = document.querySelectorAll('.hall-checkbox:checked').length;
-            if (checked === 0) {
+            const selectedHalls = $('#selectedRoomIds').val();
+            if (!selectedHalls || selectedHalls.length === 0) {
                 document.getElementById('hallError').style.display = 'block';
                 document.getElementById('hallSection').scrollIntoView({ behavior: 'smooth' });
                 return false;
@@ -167,3 +153,17 @@
     // Show hall section on page load if Allocator is pre-selected
     toggleHallSection();
 </script>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2-halls').select2({
+                placeholder: "Search and select conference halls...",
+                allowClear: true,
+                theme: "default"
+            });
+        });
+    </script>
+}

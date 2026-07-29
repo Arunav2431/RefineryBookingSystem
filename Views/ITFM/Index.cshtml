@@ -1,4 +1,4 @@
-@model IEnumerable<RefineryBooking.Models.ITFacilityRequirement>
+@model IEnumerable<RefineryBooking.Models.Booking>
 @{
     ViewData["Title"] = "IT & Facilities Readiness Queue";
 }
@@ -38,15 +38,23 @@ else
     <div class="d-flex flex-column gap-3">
         @foreach (var item in Model)
         {
-            var statusColor = item.SetupStatus == RefineryBooking.Models.TechSetupStatus.Ready ? "success"
-                            : item.SetupStatus == RefineryBooking.Models.TechSetupStatus.IssueReported ? "danger"
+            var req = item.ITRequirement;
+            var statusColor = req?.SetupStatus == RefineryBooking.Models.TechSetupStatus.Ready ? "success"
+                            : req?.SetupStatus == RefineryBooking.Models.TechSetupStatus.IssueReported ? "danger"
                             : "warning";
-            var statusIcon = item.SetupStatus == RefineryBooking.Models.TechSetupStatus.Ready ? "fa-check-circle"
-                           : item.SetupStatus == RefineryBooking.Models.TechSetupStatus.IssueReported ? "fa-triangle-exclamation"
+            var statusIcon = req?.SetupStatus == RefineryBooking.Models.TechSetupStatus.Ready ? "fa-check-circle"
+                           : req?.SetupStatus == RefineryBooking.Models.TechSetupStatus.IssueReported ? "fa-triangle-exclamation"
                            : "fa-hourglass-half";
-            var statusText = item.SetupStatus == RefineryBooking.Models.TechSetupStatus.Ready ? "Setup Ready"
-                           : item.SetupStatus == RefineryBooking.Models.TechSetupStatus.IssueReported ? "Issue Reported"
+            var statusText = req?.SetupStatus == RefineryBooking.Models.TechSetupStatus.Ready ? "Setup Ready"
+                           : req?.SetupStatus == RefineryBooking.Models.TechSetupStatus.IssueReported ? "Issue Reported"
                            : "Setup Pending";
+
+            if (req == null && item.RequiresITFMHelp)
+            {
+                statusColor = "info";
+                statusIcon = "fa-hand-sparkles";
+                statusText = "Help Requested";
+            }
 
             <div class="card card-industrial shadow-sm border-start border-info border-4">
 
@@ -54,21 +62,21 @@ else
                 <div class="card-header bg-white py-3 d-flex align-items-center gap-3"
                      style="cursor:pointer;" onclick="toggleCard(@item.Id)">
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                        <span class="badge bg-dark px-3 py-2 font-monospace">BKG-@item.BookingId</span>
+                        <span class="badge bg-dark px-3 py-2 font-monospace">BKG-@item.Id</span>
                         <span class="badge bg-@statusColor @(statusColor == "warning" ? "text-dark" : "")">
                             <i class="fa-solid @statusIcon me-1"></i> @statusText
                         </span>
                     </div>
                     <div class="flex-grow-1 ms-2">
-                        <strong class="text-dark">@item.Booking?.MeetingTitle</strong>
-                        <span class="text-muted small ms-2">— @item.Booking?.Department</span>
+                        <strong class="text-dark">@item.MeetingTitle</strong>
+                        <span class="text-muted small ms-2">— @item.Department</span>
                     </div>
                     <div class="d-flex align-items-center gap-3 flex-shrink-0">
                         <span class="small text-muted">
-                            <i class="fa-solid fa-door-closed me-1"></i>@item.Booking?.ConferenceRoom?.Name
+                            <i class="fa-solid fa-door-closed me-1"></i>@item.ConferenceRoom?.Name
                         </span>
                         <span class="small text-muted">
-                            <i class="fa-solid fa-clock me-1"></i>@item.Booking?.StartTime.ToString("MMM dd, HH:mm") – @item.Booking?.EndTime.ToString("HH:mm")
+                            <i class="fa-solid fa-clock me-1"></i>@item.StartTime.ToString("MMM dd, HH:mm") – @item.EndTime.ToString("HH:mm")
                         </span>
                         <i class="fa-solid fa-chevron-down text-muted toggle-icon-itfm-@item.Id" style="transition:transform 0.2s;"></i>
                     </div>
@@ -85,37 +93,37 @@ else
                                 <table class="table table-sm table-borderless">
                                     <tr>
                                         <td class="fw-semibold text-muted" style="width:40%">Booking ID</td>
-                                        <td><span class="font-monospace fw-bold">BKG-@item.BookingId</span></td>
+                                        <td><span class="font-monospace fw-bold">BKG-@item.Id</span></td>
                                     </tr>
                                     <tr>
                                         <td class="fw-semibold text-muted">Meeting</td>
-                                        <td><strong>@item.Booking?.MeetingTitle</strong></td>
+                                        <td><strong>@item.MeetingTitle</strong></td>
                                     </tr>
                                     <tr>
                                         <td class="fw-semibold text-muted">Organizer</td>
-                                        <td>@item.Booking?.OrganizerName</td>
+                                        <td>@item.OrganizerName</td>
                                     </tr>
                                     <tr>
                                         <td class="fw-semibold text-muted">Department</td>
-                                        <td>@item.Booking?.Department</td>
+                                        <td>@item.Department</td>
                                     </tr>
                                     <tr>
                                         <td class="fw-semibold text-muted">Hall</td>
                                         <td>
-                                            <span class="badge bg-secondary">@item.Booking?.ConferenceRoom?.Name</span>
-                                            <small class="text-muted d-block">@item.Booking?.ConferenceRoom?.BuildingLocation</small>
+                                            <span class="badge bg-secondary">@item.ConferenceRoom?.Name</span>
+                                            <small class="text-muted d-block">@item.ConferenceRoom?.BuildingLocation</small>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="fw-semibold text-muted">Date & Time</td>
                                         <td>
-                                            <strong>@item.Booking?.StartTime.ToString("dddd, dd MMM yyyy")</strong><br />
-                                            <span class="text-muted">@item.Booking?.StartTime.ToString("HH:mm") – @item.Booking?.EndTime.ToString("HH:mm")</span>
+                                            <strong>@item.StartTime.ToString("dddd, dd MMM yyyy")</strong><br />
+                                            <span class="text-muted">@item.StartTime.ToString("HH:mm") – @item.EndTime.ToString("HH:mm")</span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="fw-semibold text-muted">Participants</td>
-                                        <td><i class="fa-solid fa-users me-1 text-muted"></i> @item.Booking?.ExpectedAttendees people</td>
+                                        <td><i class="fa-solid fa-users me-1 text-muted"></i> @item.ExpectedAttendees people</td>
                                     </tr>
                                 </table>
                             </div>
@@ -125,51 +133,55 @@ else
                                     <i class="fa-solid fa-plug me-1"></i> Equipment Required
                                 </h6>
                                 <div class="d-flex flex-wrap gap-2 mb-3">
-                                    @if (item.Booking?.RequiresCatering == true) { <span class="badge bg-warning text-dark"><i class="fa-solid fa-mug-hot me-1"></i> Refreshments</span> }
-                                    @if (item.NeedsVideoConferencing) { <span class="badge bg-info text-white"><i class="fa-solid fa-video me-1"></i> Video Conf</span> }
-                                    @if (item.NeedsProjector) { <span class="badge bg-primary"><i class="fa-solid fa-projector me-1"></i> Projector</span> }
-                                    @if (item.NeedsWhiteboard) { <span class="badge bg-success"><i class="fa-solid fa-chalkboard me-1"></i> Whiteboard</span> }
-                                    @if (item.NeedsPASystem) { <span class="badge bg-danger"><i class="fa-solid fa-tower-broadcast me-1"></i> PA System</span> }
-                                    @if (item.NeedsLaptop) { <span class="badge bg-secondary"><i class="fa-solid fa-laptop me-1"></i> Laptop</span> }
-                                    @if (item.NeedsLaserPointer) { <span class="badge bg-dark"><i class="fa-solid fa-computer-mouse me-1"></i> Laser Pointer</span> }
-                                    @if (item.MicCount > 0) { <span class="badge bg-dark"><i class="fa-solid fa-microphone me-1"></i> @item.MicCount Mics</span> }
+                                    @if (item.RequiresCatering == true) { <span class="badge bg-warning text-dark"><i class="fa-solid fa-mug-hot me-1"></i> Refreshments</span> }
+                                    @if (req?.NeedsVideoConferencing == true) { <span class="badge bg-info text-white"><i class="fa-solid fa-video me-1"></i> Video Conf</span> }
+                                    @if (req?.NeedsProjector == true) { <span class="badge bg-primary"><i class="fa-solid fa-projector me-1"></i> Projector</span> }
+                                    @if (req?.NeedsWhiteboard == true) { <span class="badge bg-success"><i class="fa-solid fa-chalkboard me-1"></i> Whiteboard</span> }
+                                    @if (req?.NeedsPASystem == true) { <span class="badge bg-danger"><i class="fa-solid fa-tower-broadcast me-1"></i> PA System</span> }
+                                    @if (req?.NeedsLaptop == true) { <span class="badge bg-secondary"><i class="fa-solid fa-laptop me-1"></i> Laptop</span> }
+                                    @if (req?.NeedsLaserPointer == true) { <span class="badge bg-dark"><i class="fa-solid fa-computer-mouse me-1"></i> Laser Pointer</span> }
+                                    @if (req?.MicCount > 0) { <span class="badge bg-dark"><i class="fa-solid fa-microphone me-1"></i> @req.MicCount Mics</span> }
+                                    @if (req == null && item.RequiresITFMHelp) { <span class="badge bg-light text-dark border"><i class="fa-solid fa-person-circle-question me-1"></i> General Help Requested</span> }
                                 </div>
 
-                                @if (!string.IsNullOrWhiteSpace(item.TechNotes))
+                                @if (!string.IsNullOrWhiteSpace(req?.TechNotes))
                                 {
                                     <div class="alert alert-info py-2 small mb-3">
-                                        <i class="fa-solid fa-note-sticky me-1"></i> <em>@item.TechNotes</em>
+                                        <i class="fa-solid fa-note-sticky me-1"></i> <em>@req.TechNotes</em>
                                     </div>
                                 }
 
-                                <hr />
-                                <h6 class="fw-bold text-uppercase small text-muted mb-2">Update Setup Status</h6>
-                                <div class="btn-group shadow-sm" role="group">
-                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.Ready" />
-                                        <button type="submit" class="btn btn-success fw-bold">
-                                            <i class="fa-solid fa-check me-1"></i> Mark Ready
-                                        </button>
-                                    </form>
-                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.Pending" />
-                                        <button type="submit" class="btn btn-outline-warning text-dark fw-bold">
-                                            <i class="fa-solid fa-rotate-left me-1"></i> Reset
-                                        </button>
-                                    </form>
-                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.IssueReported" />
-                                        <button type="submit" class="btn btn-outline-danger fw-bold">
-                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> Report Issue
-                                        </button>
-                                    </form>
-                                </div>
+                                @if (req != null)
+                                {
+                                    <hr />
+                                    <h6 class="fw-bold text-uppercase small text-muted mb-2">Update Setup Status</h6>
+                                    <div class="btn-group shadow-sm" role="group">
+                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@req.Id" />
+                                            <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.Ready" />
+                                            <button type="submit" class="btn btn-success fw-bold">
+                                                <i class="fa-solid fa-check me-1"></i> Mark Ready
+                                            </button>
+                                        </form>
+                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@req.Id" />
+                                            <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.Pending" />
+                                            <button type="submit" class="btn btn-outline-warning text-dark fw-bold">
+                                                <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                                            </button>
+                                        </form>
+                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@req.Id" />
+                                            <input type="hidden" name="status" value="@RefineryBooking.Models.TechSetupStatus.IssueReported" />
+                                            <button type="submit" class="btn btn-outline-danger fw-bold">
+                                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Report Issue
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
