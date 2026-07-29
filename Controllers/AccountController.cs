@@ -41,20 +41,8 @@ namespace RefineryBooking.Controllers
                 return View();
             }
 
-            // ── STEP 1: Emergency Local Fallback (Strictly for System Admin) ─────
-            // If the company server is down or credentials fail, we ONLY allow
-            // the emergency 'sys.admin' account to authenticate locally.
-            if (userId.Equals("sys.admin", StringComparison.OrdinalIgnoreCase))
-            {
-                var localResult = await _signInManager.PasswordSignInAsync(
-                    userId, password, isPersistent: false, lockoutOnFailure: false);
-
-                if (localResult.Succeeded)
-                    return RedirectToLocal(returnUrl);
-            }
-
-            // ── STEP 2: Try company server authentication ────────────────────
-            // In Strict AD Mode, all regular users MUST authenticate via the company server.
+            // ── Try company server authentication ────────────────────
+            // In Strict AD Mode, all users MUST authenticate via the company server.
             var companyProfile = await _companyAuth.ValidateAndGetProfileAsync(userId, password);
 
             if (companyProfile != null)

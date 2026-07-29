@@ -149,7 +149,7 @@ flowchart TD
 ---
 title: ITFM — IT & Facilities Management
 ---
-flowchart TD
+flowchart LR
     A([START]) --> B[/Log in as ITFM/]
     B --> C[Land on ITFM Dashboard]
     C --> D[/System Displays Approved Bookings with IT Requirements/]
@@ -197,7 +197,7 @@ flowchart TD
 ---
 title: ADMIN — Full System Administration
 ---
-flowchart TD
+flowchart LR
     A([START]) --> B[/Log in as Admin/]
     B --> C[Land on Admin Dashboard]
     C --> D{Select Administrative Task}
@@ -273,20 +273,16 @@ flowchart TD
 ---
 title: AUTHENTICATION FLOW — System Wide
 ---
-flowchart TD
+flowchart LR
     A([USER/ADMIN/ITFM OPENS SYSTEM]) --> B[/Enter Windows Username & Password/]
     B --> C[Click Sign In]
-    C --> D{Check Local System Database}
-
-    D -- "Found & Password Matches" --> E[/User Authenticated via Local DB/]
-    E --> F([REDIRECT TO DASHBOARD])
-
-    D -- "Not Found or Incorrect" --> G{Check Company Directory Server\n(via CompanyAuthService)}
-
-    G -- "Credentials Invalid" --> H[/Show Error: Invalid Username or Password/]
-    H --> B
-
-    G -- "Credentials Valid" --> I{Does Local Account Exist?}
+    
+    C --> H{Check Company Directory Server\n(via CompanyAuthService)}
+    
+    H -- "Credentials Invalid" --> G[/Show Error: Invalid Credentials/]
+    G --> B
+    
+    H -- "Credentials Valid" --> I{Does Local Account Exist?}
 
     I -- "No (First Login)" --> J[System Auto-Creates Local Account]
     J --> K[/Extract Name & Department from Server/]
@@ -304,8 +300,8 @@ flowchart TD
     classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
     class A,F startEnd;
     class C,J process;
-    class D,G,I decision;
-    class B,E,H,K,L,M,N io;
+    class H,I decision;
+    class B,G,K,L,M,N io;
 ```
 ##### END OF AUTHENTICATION FLOWCHART
 
