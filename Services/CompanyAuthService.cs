@@ -121,7 +121,7 @@ namespace RefineryBooking.Services
             
             // [MOCK IMPLEMENTATION FOR DEVELOPMENT]
             // Allow seeded users to authenticate since AD is not connected yet.
-            if (password == "Admin123!") // The password used in database seeding
+            if (password == "Refinery2026!") // The password used in database seeding
             {
                 return new CompanyUserProfile
                 {
@@ -129,10 +129,10 @@ namespace RefineryBooking.Services
                     FullName = employeeId.Equals("sys.admin", StringComparison.OrdinalIgnoreCase) ? "System Administrator" :
                                employeeId.Equals("sarah.jenkins", StringComparison.OrdinalIgnoreCase) ? "Sarah Jenkins" :
                                employeeId.Equals("marcus.vance", StringComparison.OrdinalIgnoreCase) ? "Marcus Vance" :
-                               employeeId.Equals("itfm.manager", StringComparison.OrdinalIgnoreCase) ? "ITFM Manager" : "Test User",
-                    Department = employeeId.Equals("sarah.jenkins", StringComparison.OrdinalIgnoreCase) ? "HR" :
-                                 employeeId.Equals("marcus.vance", StringComparison.OrdinalIgnoreCase) ? "Facilities" :
-                                 employeeId.Equals("itfm.manager", StringComparison.OrdinalIgnoreCase) ? "IT" : "General"
+                               employeeId.Equals("dave.miller", StringComparison.OrdinalIgnoreCase) ? "Dave Miller" : "Test User",
+                    Department = employeeId.Equals("sarah.jenkins", StringComparison.OrdinalIgnoreCase) ? "Facilities & Allocation" :
+                                 employeeId.Equals("marcus.vance", StringComparison.OrdinalIgnoreCase) ? "IT Services" :
+                                 employeeId.Equals("dave.miller", StringComparison.OrdinalIgnoreCase) ? "General" : "Administration"
                 };
             }
 
