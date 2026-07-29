@@ -69,6 +69,16 @@ flowchart TD
     
     AF --> Z
     AG --> Z
+
+    %% Styling
+    classDef startEnd fill:#d5e8d4,stroke:#82b366,stroke-width:2px,color:#000;
+    classDef process fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px,color:#000;
+    classDef decision fill:#ffe6cc,stroke:#d79b00,stroke-width:2px,color:#000;
+    classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
+    class A,Z startEnd;
+    class G,H,I,K,O,R,AB process;
+    class D,F,J,M,N,V,Y,AE decision;
+    class B,C,E,L,P,Q,S,T,U,W,X,AA,AC,AD,AF,AG io;
 ```
 ##### END OF USER FLOWCHART
 
@@ -121,6 +131,16 @@ flowchart TD
 
     Q -- Yes --> I
     Q -- No --> Z
+
+    %% Styling
+    classDef startEnd fill:#d5e8d4,stroke:#82b366,stroke-width:2px,color:#000;
+    classDef process fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px,color:#000;
+    classDef decision fill:#ffe6cc,stroke:#d79b00,stroke-width:2px,color:#000;
+    classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
+    class A,Z startEnd;
+    class C,I,N,R process;
+    class D,G,J,M,Q,S decision;
+    class B,E,F,H,K,L,O,P,T,U io;
 ```
 ##### END OF ALLOCATOR FLOWCHART
 
@@ -159,6 +179,16 @@ flowchart TD
 
     N -- Yes --> G
     N -- No --> Z
+
+    %% Styling
+    classDef startEnd fill:#d5e8d4,stroke:#82b366,stroke-width:2px,color:#000;
+    classDef process fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px,color:#000;
+    classDef decision fill:#ffe6cc,stroke:#d79b00,stroke-width:2px,color:#000;
+    classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
+    class A,Z startEnd;
+    class C,I,K,O process;
+    class E,J,N decision;
+    class B,D,F,G,H,L,M,P io;
 ```
 ##### END OF ITFM FLOWCHART
 
@@ -225,6 +255,16 @@ flowchart TD
     BC -- No --> BA
 
     D -- "Logout" --> Z([END])
+
+    %% Styling
+    classDef startEnd fill:#d5e8d4,stroke:#82b366,stroke-width:2px,color:#000;
+    classDef process fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px,color:#000;
+    classDef decision fill:#ffe6cc,stroke:#d79b00,stroke-width:2px,color:#000;
+    classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
+    class A,Z startEnd;
+    class C,E,J,L,R,V process;
+    class D,F,H,M,S,CB,BC decision;
+    class B,G,I,K,N,O,P,Q,T,U,W,X,Y,CA,CC,CD,CE,CF,BA,BB,BD,BE io;
 ```
 ##### END OF ADMIN FLOWCHART
 
@@ -260,6 +300,16 @@ flowchart TD
     I -- "Yes (Returning User)" --> M[System Updates Local Profile]
     M --> N[/Sync Name & Department Changes from Server/]
     N --> F
+
+    %% Styling
+    classDef startEnd fill:#d5e8d4,stroke:#82b366,stroke-width:2px,color:#000;
+    classDef process fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px,color:#000;
+    classDef decision fill:#ffe6cc,stroke:#d79b00,stroke-width:2px,color:#000;
+    classDef io fill:#e1d5e7,stroke:#9673a6,stroke-width:2px,color:#000;
+    class A,F startEnd;
+    class C,J process;
+    class D,G,I decision;
+    class B,E,H,K,L,M,N io;
 ```
 ##### END OF AUTHENTICATION FLOWCHART
 
