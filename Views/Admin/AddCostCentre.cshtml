@@ -1,0 +1,55 @@
+﻿@model RefineryBooking.Models.CostCentre
+@{
+    ViewData["Title"] = "Add Cost Centre";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card card-industrial">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold" style="color:var(--nrl-navy);">
+                    <i class="fa-solid fa-plus-circle me-2 text-primary"></i>Add New Cost Centre
+                </h5>
+                <a asp-action="CostCentres" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="AddCostCentre" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label fw-bold">Cost Centre Code *</label>
+                        <input asp-for="Code" class="form-control" placeholder="e.g. 1001 or CC-001" required maxlength="10" />
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                        <div class="form-text text-muted small">Max 10 characters. Should match standard refinery coding.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-bold">Name *</label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g. Information Technology" required maxlength="150" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label fw-bold">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="2" maxlength="500"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="CostCentres" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-nrl-primary">
+                            <i class="fa-solid fa-save me-1"></i>Save Cost Centre
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

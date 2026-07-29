@@ -1,4 +1,4 @@
-// File: Data/ApplicationDbContext.cs
+﻿// File: Data/ApplicationDbContext.cs
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +26,7 @@ namespace RefineryBooking.Data
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<HallBlock> HallBlocks { get; set; } = null!;
         public DbSet<AllocatorHallAssignment> AllocatorHallAssignments { get; set; } = null!;
+        public DbSet<CostCentre> CostCentres { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,6 +41,10 @@ namespace RefineryBooking.Data
                 .HasIndex(r => r.HallCode)
                 .IsUnique();
 
+            builder.Entity<CostCentre>()
+                .HasIndex(c => c.Code)
+                .IsUnique();
+
             // 1-to-1 relationship between Booking and IT Facility Requirement
             builder.Entity<Booking>()
                 .HasOne(b => b.ITRequirement)
@@ -47,28 +52,28 @@ namespace RefineryBooking.Data
                 .HasForeignKey<ITFacilityRequirement>(i => i.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // HallBlock → ConferenceRoom
+            // HallBlock â†’ ConferenceRoom
             builder.Entity<HallBlock>()
                 .HasOne(h => h.ConferenceRoom)
                 .WithMany()
                 .HasForeignKey(h => h.ConferenceRoomId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // HallBlock → CreatedBy (no cascade to avoid multiple cascade paths)
+            // HallBlock â†’ CreatedBy (no cascade to avoid multiple cascade paths)
             builder.Entity<HallBlock>()
                 .HasOne(h => h.CreatedBy)
                 .WithMany()
                 .HasForeignKey(h => h.CreatedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // AllocatorHallAssignment → Allocator (no cascade)
+            // AllocatorHallAssignment â†’ Allocator (no cascade)
             builder.Entity<AllocatorHallAssignment>()
                 .HasOne(a => a.Allocator)
                 .WithMany()
                 .HasForeignKey(a => a.AllocatorUserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // AllocatorHallAssignment → ConferenceRoom
+            // AllocatorHallAssignment â†’ ConferenceRoom
             builder.Entity<AllocatorHallAssignment>()
                 .HasOne(a => a.ConferenceRoom)
                 .WithMany()
@@ -138,7 +143,7 @@ namespace RefineryBooking.Data
             };
             itfmUser.PasswordHash = hasher.HashPassword(itfmUser, "Refinery2026!");
 
-            // Default general user — regular employees are auto-provisioned on first
+            // Default general user â€” regular employees are auto-provisioned on first
             // login via CompanyAuthService (their name & dept come from the company server).
             var generalUser = new ApplicationUser
             {

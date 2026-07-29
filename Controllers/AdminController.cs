@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +28,7 @@ namespace RefineryBooking.Controllers
             _companyAuth = companyAuth;
         }
 
-        // ── USER LIST ────────────────────────────────────────────────────
+        // â”€â”€ USER LIST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         public async Task<IActionResult> Users()
         {
             var users = await _userManager.Users.OrderBy(u => u.FullName).ToListAsync();
@@ -36,7 +36,7 @@ namespace RefineryBooking.Controllers
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                userRoles[user.Id] = roles.FirstOrDefault() ?? "—";
+                userRoles[user.Id] = roles.FirstOrDefault() ?? "â€”";
             }
             ViewBag.UserRoles = userRoles;
 
@@ -50,7 +50,7 @@ namespace RefineryBooking.Controllers
             return View("UserList", users);
         }
 
-        // ── CREATE USER GET ──────────────────────────────────────────────────
+        // â”€â”€ CREATE USER GET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         public async Task<IActionResult> CreateUser()
         {
             ViewBag.Roles    = new List<string> { "Allocator", "ITFM", "Admin" };
@@ -61,7 +61,7 @@ namespace RefineryBooking.Controllers
             return View();
         }
 
-        // ── CREATE USER POST ─────────────────────────────────────────────────
+        // â”€â”€ CREATE USER POST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(string windowsUsername,
             string employeeBadgeId, string role, string password, int[]? selectedRoomIds)
@@ -91,9 +91,9 @@ namespace RefineryBooking.Controllers
             if (existingUser != null)
                 return await ReturnWithError($"A user with username '{windowsUsername}' already exists.");
 
-            // ── Fetch Full Name & Department from company server ─────────────────────
+            // â”€â”€ Fetch Full Name & Department from company server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var companyProfile = await _companyAuth.GetProfileAsync(windowsUsername);
-            var fullName   = companyProfile?.FullName   ?? $"({windowsUsername} — pending company sync)";
+            var fullName   = companyProfile?.FullName   ?? $"({windowsUsername} â€” pending company sync)";
             var department = companyProfile?.Department ?? "(Pending company sync)";
             var email      = companyProfile?.Email      ?? $"{windowsUsername}@nrl.co.in";
 
@@ -113,7 +113,7 @@ namespace RefineryBooking.Controllers
 
             await _userManager.AddToRoleAsync(user, role);
 
-            // ── Save hall assignments for Allocator ──────────────────────────────────
+            // â”€â”€ Save hall assignments for Allocator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (role == "Allocator")
             {
                 var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -132,7 +132,7 @@ namespace RefineryBooking.Controllers
 
             var profileNote = companyProfile != null
                 ? $"Name '{fullName}', Dept '{department}' fetched from company server."
-                : "Company server not yet connected — name/dept will update on first login.";
+                : "Company server not yet connected â€” name/dept will update on first login.";
 
             var hallNote = role == "Allocator"
                 ? $" Assigned to {selectedRoomIds.Length} hall(s)."
@@ -142,7 +142,7 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(Users));
         }
 
-        // ── EDIT ROLE POST ───────────────────────────────────────────────────
+        // â”€â”€ EDIT ROLE POST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeRole(string userId, string newRole)
         {
@@ -157,7 +157,7 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(Users));
         }
 
-        // ── DEACTIVATE USER POST ─────────────────────────────────────────────
+        // â”€â”€ DEACTIVATE USER POST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateUser(string userId)
         {
@@ -172,7 +172,7 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(Users));
         }
 
-        // ── REACTIVATE USER POST ─────────────────────────────────────────────
+        // â”€â”€ REACTIVATE USER POST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ReactivateUser(string userId)
         {
@@ -184,7 +184,7 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(Users));
         }
 
-        // ── BOOKING HISTORY (ADMIN ONLY) ─────────────────────────────────────
+        // â”€â”€ BOOKING HISTORY (ADMIN ONLY) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         public async Task<IActionResult> BookingHistory(string? searchHallName, int page = 1)
         {
             int pageSize = 50;
@@ -212,7 +212,7 @@ namespace RefineryBooking.Controllers
             return View(bookings);
         }
 
-        // ── CANCEL BOOKING (ADMIN ONLY) ──────────────────────────────────────
+        // â”€â”€ CANCEL BOOKING (ADMIN ONLY) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelBooking(int id)
@@ -246,7 +246,7 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(BookingHistory));
         }
 
-        // ── MANAGE ALLOCATOR HALL ASSIGNMENTS GET ──────────────────────────────
+        // â”€â”€ MANAGE ALLOCATOR HALL ASSIGNMENTS GET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         public async Task<IActionResult> ManageAllocatorHalls(string userId)
         {
             var allocator = await _userManager.FindByIdAsync(userId);
@@ -276,7 +276,7 @@ namespace RefineryBooking.Controllers
             return View(allRooms);
         }
 
-        // ── MANAGE ALLOCATOR HALL ASSIGNMENTS POST ─────────────────────────────
+        // â”€â”€ MANAGE ALLOCATOR HALL ASSIGNMENTS POST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ManageAllocatorHalls(string userId, int[]? selectedRoomIds)
         {
@@ -313,7 +313,7 @@ namespace RefineryBooking.Controllers
             return RedirectToAction(nameof(Users));
         }
 
-        // ── MANAGE HALLS (ADMIN) ─────────────────────────────────────────────
+        // â”€â”€ MANAGE HALLS (ADMIN) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         public async Task<IActionResult> Halls()
         {
@@ -470,3 +470,4 @@ namespace RefineryBooking.Controllers
         };
     }
 }
+

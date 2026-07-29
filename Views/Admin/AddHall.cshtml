@@ -1,4 +1,4 @@
-@model RefineryBooking.Models.ConferenceRoom
+﻿@model RefineryBooking.Models.ConferenceRoom
 @{
     ViewData["Title"] = "Add New Hall";
     var depts = ViewBag.Departments as List<string> ?? new();
@@ -130,7 +130,7 @@
             if (codeInput.value && !codeInput.value.startsWith('CC-')) return;
             
             const dept = document.getElementById('OwnerDepartment').value;
-            let cc = document.getElementById('CostCentreCode').value;
+            let cc = document.getElementById('CostCentreCodeSelect').value;
             
             if (dept && cc) {
                 // Pad CC to 4 digits
@@ -141,3 +141,4 @@
         }
     </script>
 }
+
