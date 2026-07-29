@@ -1,4 +1,4 @@
-@model RefineryBooking.Models.Booking
+﻿@model RefineryBooking.Models.Booking
 @{
     ViewData["Title"] = "Request Room Booking";
 }
@@ -12,7 +12,7 @@
             <div>
                 <span class="fw-bold fs-6">Booking Reference</span><br />
                 <span class="text-warning fw-bold">BKG-AUTO</span>
-                <span class="text-white-50 small ms-2">— will be assigned automatically upon submission</span>
+                <span class="text-white-50 small ms-2">â€” will be assigned automatically upon submission</span>
             </div>
         </div>
 
@@ -77,13 +77,13 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label asp-for="ConferenceRoomId" class="form-label fw-semibold">Hall Selection *</label>
-                            <select asp-for="ConferenceRoomId" class="form-select" asp-items="ViewBag.Rooms" id="roomSelect" required>
+                            <select asp-for="ConferenceRoomId" class="form-select searchable-select" asp-items="ViewBag.Rooms" id="roomSelect" required style="width: 100%;">
                                 <option value="">-- Select Conference Hall --</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label asp-for="CostCentre" class="form-label fw-semibold">Cost Centre *</label>
-                            <select asp-for="CostCentre" class="form-select" asp-items="ViewBag.CostCentres" required>
+                            <select asp-for="CostCentre" class="form-select searchable-select" asp-items="ViewBag.CostCentres" id="costCentreSelect" required style="width: 100%;">
                                 <option value="">-- Select Cost Centre --</option>
                             </select>
                             <span asp-validation-for="CostCentre" class="text-danger small"></span>
@@ -101,7 +101,7 @@
                         <div class="col-12">
                             <div class="alert alert-info py-2 mb-0 d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-clock text-info"></i>
-                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>09:30 – 17:30</strong>.</span>
+                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>09:30 â€“ 17:30</strong>.</span>
                                 <span id="slotStatus" class="ms-auto badge bg-secondary">Select times to check</span>
                             </div>
                         </div>
@@ -178,7 +178,7 @@
                             <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Any special arrangements, access requirements, or notes for the Allocator..."></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Attachment <span class="text-muted small fw-normal">(PDF, Word, Excel, Images — max 5 MB)</span></label>
+                            <label class="form-label fw-semibold">Attachment <span class="text-muted small fw-normal">(PDF, Word, Excel, Images â€” max 5 MB)</span></label>
                             <input type="file" name="attachment" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" id="attachmentInput" />
                             <div id="filePreview" class="mt-2 text-muted small d-none">
                                 <i class="fa-solid fa-paperclip me-1"></i><span id="fileName"></span>
@@ -287,7 +287,7 @@
                 } else if (startH >= endH) {
                     badge.removeClass('bg-secondary bg-success').addClass('bg-warning text-dark').text('Invalid time range');
                 } else {
-                    badge.removeClass('bg-secondary bg-danger bg-warning text-dark').addClass('bg-success').text('Within working hours ✓');
+                    badge.removeClass('bg-secondary bg-danger bg-warning text-dark').addClass('bg-success').text('Within working hours âœ“');
                 }
             }
 
