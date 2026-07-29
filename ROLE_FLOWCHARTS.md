@@ -1,4 +1,4 @@
-﻿# Role Workflow Flowcharts
+# Role Workflow Flowcharts
 ## NRL Conference Hall Booking System
 
 > All flowcharts use standard notation:
@@ -9,9 +9,13 @@
 
 ---
 
+##### START OF USER FLOWCHART
 ## 1. USER — Booking a Conference Hall
 
 ```mermaid
+---
+title: USER — Booking a Conference Hall
+---
 flowchart TD
     A([START]) --> B[/Open Browser & Go to System URL/]
     B --> C[/Enter Windows Username & Password/]
@@ -66,14 +70,19 @@ flowchart TD
     AF --> Z
     AG --> Z
 ```
+##### END OF USER FLOWCHART
 
 ---
 
+##### START OF ALLOCATOR FLOWCHART
 ## 2. ALLOCATOR — Managing & Approving Bookings (Hall-Specific)
 
 > **Key Rule:** Each Allocator is assigned to specific halls by an Admin. They ONLY see bookings for their assigned halls.
 
 ```mermaid
+---
+title: ALLOCATOR — Managing & Approving Bookings (Hall-Specific)
+---
 flowchart TD
     A([START]) --> B[/Log in as Allocator/]
     B --> C[Land on Allocator Dashboard]
@@ -113,12 +122,17 @@ flowchart TD
     Q -- Yes --> I
     Q -- No --> Z
 ```
+##### END OF ALLOCATOR FLOWCHART
 
 ---
 
+##### START OF ITFM FLOWCHART
 ## 3. ITFM — IT & Facilities Management
 
 ```mermaid
+---
+title: ITFM — IT & Facilities Management
+---
 flowchart TD
     A([START]) --> B[/Log in as ITFM/]
     B --> C[Land on ITFM Dashboard]
@@ -146,12 +160,17 @@ flowchart TD
     N -- Yes --> G
     N -- No --> Z
 ```
+##### END OF ITFM FLOWCHART
 
 ---
 
+##### START OF ADMIN FLOWCHART
 ## 4. ADMIN — Full System Administration
 
 ```mermaid
+---
+title: ADMIN — Full System Administration
+---
 flowchart TD
     A([START]) --> B[/Log in as Admin/]
     B --> C[Land on Admin Dashboard]
@@ -207,12 +226,17 @@ flowchart TD
 
     D -- "Logout" --> Z([END])
 ```
+##### END OF ADMIN FLOWCHART
 
 ---
 
+##### START OF AUTHENTICATION FLOWCHART
 ## 5. AUTHENTICATION FLOW — System Wide
 
 ```mermaid
+---
+title: AUTHENTICATION FLOW — System Wide
+---
 flowchart TD
     A([USER/ADMIN/ITFM OPENS SYSTEM]) --> B[/Enter Windows Username & Password/]
     B --> C[Click Sign In]
@@ -237,3 +261,5 @@ flowchart TD
     M --> N[/Sync Name & Department Changes from Server/]
     N --> F
 ```
+##### END OF AUTHENTICATION FLOWCHART
+
