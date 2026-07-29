@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using RefineryBooking.Data;
 using RefineryBooking.Models;
+using RefineryBooking.Services;
 using System.Security.Claims;
 
 namespace RefineryBooking.Controllers
@@ -14,17 +15,20 @@ namespace RefineryBooking.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ICompanyAuthService _companyAuth;
 
         public AdminController(ApplicationDbContext context,
                                UserManager<ApplicationUser> userManager,
-                               RoleManager<IdentityRole> roleManager)
+                               RoleManager<IdentityRole> roleManager,
+                               ICompanyAuthService companyAuth)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _companyAuth = companyAuth;
         }
 
-        // ── USER LIST ────────────────────────────────────────────────────────
+        // ── USER LIST ────────────────────────────────────────────────────
         public async Task<IActionResult> Users()
         {
             var users = await _userManager.Users.OrderBy(u => u.FullName).ToListAsync();
@@ -35,48 +39,59 @@ namespace RefineryBooking.Controllers
                 userRoles[user.Id] = roles.FirstOrDefault() ?? "—";
             }
             ViewBag.UserRoles = userRoles;
+
+            // Hall assignment counts for each Allocator (shown in UserList)
+            var hallCounts = await _context.AllocatorHallAssignments
+                .GroupBy(a => a.AllocatorUserId)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Count);
+            ViewBag.HallCounts = hallCounts;
+
             return View("UserList", users);
         }
 
         // ── CREATE USER GET ──────────────────────────────────────────────────
-        public IActionResult CreateUser()
+        public async Task<IActionResult> CreateUser()
         {
-            // Admin can only create system-role accounts (Admin, ITFM, Allocator).
-            // Regular employees (User role) log in automatically using their
-            // company network credentials — no manual creation needed.
-            ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
-            ViewBag.Departments = GetDepartments();
+            ViewBag.Roles    = new List<string> { "Allocator", "ITFM", "Admin" };
+            ViewBag.AllRooms = await _context.ConferenceRooms
+                .Where(r => r.IsActive)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
             return View();
         }
 
         // ── CREATE USER POST ─────────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(string windowsUsername,
-            string employeeBadgeId, string role, string password)
+            string employeeBadgeId, string role, string password, int[]? selectedRoomIds)
         {
-            // Only allow system roles — not regular "User" role
             var allowedRoles = new[] { "Admin", "ITFM", "Allocator" };
+            selectedRoomIds ??= Array.Empty<int>();
+
+            async Task<IActionResult> ReturnWithError(string msg)
+            {
+                TempData["ErrorMessage"] = msg;
+                ViewBag.Roles    = new List<string> { "Allocator", "ITFM", "Admin" };
+                ViewBag.AllRooms = await _context.ConferenceRooms
+                    .Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+                return View();
+            }
 
             if (string.IsNullOrWhiteSpace(windowsUsername) ||
                 string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(role) ||
                 !allowedRoles.Contains(role))
-            {
-                TempData["ErrorMessage"] = "Windows Username, Password, and a valid Role are required.";
-                ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
-                return View();
-            }
+                return await ReturnWithError("Windows Username, Password, and a valid Role are required.");
+
+            // Allocator MUST have at least one hall assigned at creation
+            if (role == "Allocator" && selectedRoomIds.Length == 0)
+                return await ReturnWithError("An Allocator must be assigned to at least one conference hall.");
 
             var existingUser = await _userManager.FindByNameAsync(windowsUsername);
             if (existingUser != null)
-            {
-                TempData["ErrorMessage"] = $"A user with username '{windowsUsername}' already exists.";
-                ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
-                return View();
-            }
+                return await ReturnWithError($"A user with username '{windowsUsername}' already exists.");
 
-            // ── Fetch Full Name & Department from company server ────────────────────────
-            // Uses a read-only LDAP service account — no employee password needed.
-            // Falls back to a placeholder if company server is not yet connected.
+            // ── Fetch Full Name & Department from company server ─────────────────────
             var companyProfile = await _companyAuth.GetProfileAsync(windowsUsername);
             var fullName   = companyProfile?.FullName   ?? $"({windowsUsername} — pending company sync)";
             var department = companyProfile?.Department ?? "(Pending company sync)";
@@ -86,27 +101,44 @@ namespace RefineryBooking.Controllers
             {
                 UserName        = windowsUsername,
                 Email           = email,
-                FullName        = fullName,         // ← from company server
-                Department      = department,        // ← from company server
+                FullName        = fullName,
+                Department      = department,
                 EmployeeBadgeId = employeeBadgeId,
                 EmailConfirmed  = true
             };
 
             var result = await _userManager.CreateAsync(user, password);
             if (!result.Succeeded)
-            {
-                TempData["ErrorMessage"] = "Error: " + string.Join(", ", result.Errors.Select(e => e.Description));
-                ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
-                return View();
-            }
+                return await ReturnWithError("Error: " + string.Join(", ", result.Errors.Select(e => e.Description)));
 
             await _userManager.AddToRoleAsync(user, role);
+
+            // ── Save hall assignments for Allocator ──────────────────────────────────
+            if (role == "Allocator")
+            {
+                var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+                foreach (var roomId in selectedRoomIds)
+                {
+                    _context.AllocatorHallAssignments.Add(new AllocatorHallAssignment
+                    {
+                        AllocatorUserId  = user.Id,
+                        ConferenceRoomId = roomId,
+                        AssignedAt       = DateTime.UtcNow,
+                        AssignedByUserId = adminId
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
 
             var profileNote = companyProfile != null
                 ? $"Name '{fullName}', Dept '{department}' fetched from company server."
                 : "Company server not yet connected — name/dept will update on first login.";
 
-            TempData["SuccessMessage"] = $"Account '{windowsUsername}' created with role '{role}'. {profileNote}";
+            var hallNote = role == "Allocator"
+                ? $" Assigned to {selectedRoomIds.Length} hall(s)."
+                : string.Empty;
+
+            TempData["SuccessMessage"] = $"Account '{windowsUsername}' created as {role}. {profileNote}{hallNote}";
             return RedirectToAction(nameof(Users));
         }
 
@@ -212,6 +244,73 @@ namespace RefineryBooking.Controllers
             }
 
             return RedirectToAction(nameof(BookingHistory));
+        }
+
+        // ── MANAGE ALLOCATOR HALL ASSIGNMENTS GET ──────────────────────────────
+        public async Task<IActionResult> ManageAllocatorHalls(string userId)
+        {
+            var allocator = await _userManager.FindByIdAsync(userId);
+            if (allocator == null) return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(allocator);
+            if (!roles.Contains("Allocator"))
+            {
+                TempData["ErrorMessage"] = "Hall assignments are only applicable to Allocator role users.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            // All conference rooms
+            var allRooms = await _context.ConferenceRooms
+                .Where(r => r.IsActive)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+
+            // Rooms currently assigned to this allocator
+            var assignedRoomIds = await _context.AllocatorHallAssignments
+                .Where(a => a.AllocatorUserId == userId)
+                .Select(a => a.ConferenceRoomId)
+                .ToListAsync();
+
+            ViewBag.Allocator = allocator;
+            ViewBag.AssignedRoomIds = assignedRoomIds;
+            return View(allRooms);
+        }
+
+        // ── MANAGE ALLOCATOR HALL ASSIGNMENTS POST ─────────────────────────────
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ManageAllocatorHalls(string userId, int[]? selectedRoomIds)
+        {
+            var allocator = await _userManager.FindByIdAsync(userId);
+            if (allocator == null) return NotFound();
+
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            selectedRoomIds ??= Array.Empty<int>();
+
+            // Remove all existing assignments for this allocator
+            var existing = await _context.AllocatorHallAssignments
+                .Where(a => a.AllocatorUserId == userId)
+                .ToListAsync();
+            _context.AllocatorHallAssignments.RemoveRange(existing);
+
+            // Add the newly selected ones
+            foreach (var roomId in selectedRoomIds)
+            {
+                _context.AllocatorHallAssignments.Add(new AllocatorHallAssignment
+                {
+                    AllocatorUserId  = userId,
+                    ConferenceRoomId = roomId,
+                    AssignedAt       = DateTime.UtcNow,
+                    AssignedByUserId = adminId
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = selectedRoomIds.Length == 0
+                ? $"All hall assignments removed for '{allocator.FullName}'."
+                : $"'{allocator.FullName}' is now assigned to {selectedRoomIds.Length} hall(s).";
+
+            return RedirectToAction(nameof(Users));
         }
 
         private static List<string> GetDepartments() => new()

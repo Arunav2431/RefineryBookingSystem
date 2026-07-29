@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "User Management";
     var userRoles = ViewBag.UserRoles as Dictionary<string, string> ?? new();
+    var hallCounts = ViewBag.HallCounts as Dictionary<string, int> ?? new();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -38,10 +39,11 @@
                 <thead>
                     <tr>
                         <th>Full Name</th>
-                        <th>Email / Username</th>
+                        <th>Windows Username</th>
                         <th>Badge ID</th>
                         <th>Department</th>
-                        <th>Assigned Role</th>
+                        <th>Role</th>
+                        <th>Halls</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -60,10 +62,31 @@
 
                         <tr>
                             <td class="fw-bold">@u.FullName</td>
-                            <td><span class="font-monospace small">@u.Email</span></td>
+                            <td><span class="font-monospace small">@u.UserName</span></td>
                             <td><span class="badge bg-light text-dark border">@u.EmployeeBadgeId</span></td>
                             <td>@u.Department</td>
                             <td><span class="badge @roleBadge">@role</span></td>
+                            <td>
+                                @if (role == "Allocator")
+                                {
+                                    var count = hallCounts.ContainsKey(u.Id) ? hallCounts[u.Id] : 0;
+                                    if (count == 0)
+                                    {
+                                        <span class="badge bg-warning text-dark"
+                                              title="No halls assigned yet">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i>None
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@count hall@(count == 1 ? "" : "s")</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
                             <td>
                                 @if (isLocked)
                                 {
@@ -79,6 +102,14 @@
                                         data-bs-toggle="modal" data-bs-target="#roleModal-@u.Id">
                                     <i class="fa-solid fa-user-shield me-1"></i>Role
                                 </button>
+                                @if (role == "Allocator")
+                                {
+                                    <a asp-action="ManageAllocatorHalls" asp-route-userId="@u.Id"
+                                       class="btn btn-sm btn-outline-primary me-1"
+                                       title="Assign/remove halls for this allocator">
+                                        <i class="fa-solid fa-building-lock me-1"></i>Halls
+                                    </a>
+                                }
                                 @if (isLocked)
                                 {
                                     <form asp-action="ReactivateUser" method="post" class="d-inline">

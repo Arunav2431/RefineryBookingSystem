@@ -54,47 +54,59 @@ flowchart TD
 
 ---
 
-## 2. ALLOCATOR — Managing & Approving Bookings
+## 2. ALLOCATOR — Managing & Approving Bookings (Hall-Specific)
+
+> **Key Rule:** Each Allocator is assigned to specific halls by Admin at account creation.
+> They ONLY see bookings for their assigned halls. One hall can have multiple allocators.
 
 ```mermaid
 flowchart TD
     A([START]) --> B[Log in with\nWindows Username + Password]
     B --> C[Land on Allocator Dashboard]
-    C --> D[/View list of\nPending bookings/]
-    D --> E{Any pending\nbookings?}
+    C --> D{Has hall\nassignments?}
 
-    E -- No --> F[/Dashboard shows:\nAll clear, no pending/]
-    F --> Z([END])
+    D -- No: Admin has not assigned halls --> E[/Show warning:\nContact Admin to assign halls/]
+    E --> Z([END])
 
-    E -- Yes --> G[Click on a booking\nto view Details]
-    G --> H[/Read booking details:\nRoom, Date, Time,\nPurpose, Attendees/]
-    H --> I{Is there a\ntime/room conflict?}
+    D -- Yes --> F[/View ONLY bookings for\nassigned halls\nFiltered automatically/]
+    F --> G{Any bookings\npending review?}
 
-    I -- Yes --> J[Reject the booking]
-    J --> K[/Enter rejection reason\ne.g. Double booking/]
-    K --> L[/Status = Rejected\nUser notified/]
-    L --> M{More pending\nbookings?}
+    G -- No --> H[/Dashboard shows:\nAll clear for assigned halls/]
+    H --> Z
 
-    I -- No --> N{Booking seems\nvalid and appropriate?}
-    N -- No --> J
+    G -- Yes --> I[Click on a booking\nto view Details]
+    I --> J{Booking is for\nan assigned hall?}
+    J -- No: Access denied --> K[/403 Forbidden\nNot your assigned hall/]
+    K --> Z
 
-    N -- Yes --> O[Click Approve]
-    O --> P{Does booking have\nIT/AV requirements?}
+    J -- Yes --> L[/Read booking details:\nRoom, Date, Time,\nPurpose, Attendees/]
+    L --> M{Is there a\ntime/room conflict?}
 
-    P -- Yes --> Q[/System flags booking\nfor ITFM team/]
-    Q --> R[/Status = Approved\nIT ticket created\nITFM notified/]
-    R --> M
+    M -- Yes --> N[Reject the booking]
+    N --> O[/Enter rejection reason\ne.g. Double booking/]
+    O --> P[/Status = Rejected\nUser notified/]
+    P --> Q{More pending\nbookings?}
 
-    P -- No --> S[/Status = Approved\nUser notified/]
-    S --> M
+    M -- No --> R{Booking valid\nand appropriate?}
+    R -- No --> N
 
-    M -- Yes --> G
-    M -- No --> T[Block a room\nfor maintenance?]
-    T -- Yes --> U[Go to Hall Blocks]
-    U --> V[/Select room, date range,\nenter reason/]
-    V --> W[/Room blocked:\nno bookings allowed\nin this period/]
-    W --> Z
-    T -- No --> Z
+    R -- Yes --> S[Click Approve]
+    S --> T{Does booking have\nIT/AV requirements?}
+
+    T -- Yes --> U[/System flags booking\nfor ITFM team/]
+    U --> V[/Status = Approved\nIT ticket created\nITFM notified/]
+    V --> Q
+
+    T -- No --> W[/Status = Approved\nUser notified/]
+    W --> Q
+
+    Q -- Yes --> I
+    Q -- No --> X[Block a room\nfor maintenance?]
+    X -- Yes --> Y[Go to Hall Blocks]
+    Y --> AA[/Select room, date range,\nenter reason/]
+    AA --> AB[/Room blocked:\nno bookings allowed\nin this period/]
+    AB --> Z
+    X -- No --> Z
 ```
 
 ---
@@ -216,3 +228,4 @@ flowchart TD
 
 *Generated for NRL Conference Hall Booking System*
 *All four roles (Admin, Allocator, ITFM, User) plus authentication flow*
+

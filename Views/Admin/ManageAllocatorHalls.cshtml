@@ -1,0 +1,138 @@
+@model IEnumerable<RefineryBooking.Models.ConferenceRoom>
+@{
+    ViewData["Title"] = "Manage Hall Assignments";
+    var allocator = ViewBag.Allocator as RefineryBooking.Models.ApplicationUser;
+    var assignedIds = ViewBag.AssignedRoomIds as List<int> ?? new List<int>();
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="fw-bold mb-0" style="color:var(--nrl-navy);">
+                    <i class="fa-solid fa-building-lock me-2"></i>Hall Assignments
+                </h4>
+                <p class="text-muted small mb-0">
+                    Allocator: <strong>@allocator?.FullName</strong>
+                    (<span class="font-monospace">@allocator?.UserName</span>)
+                </p>
+            </div>
+            <a asp-action="Users" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left me-1"></i>Back to Users
+            </a>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show py-2 small">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="card card-industrial">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-primary"></i>
+                    <span class="small text-muted">
+                        Select which conference halls <strong>@allocator?.FullName</strong>
+                        is responsible for. They will <strong>only see and approve bookings
+                        for their assigned halls</strong>. One hall can have multiple allocators.
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="ManageAllocatorHalls" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" value="@allocator?.Id" />
+
+                    <div class="row g-3">
+                        @foreach (var room in Model)
+                        {
+                            var isChecked = assignedIds.Contains(room.Id);
+                            <div class="col-md-6">
+                                <div class="form-check p-3 rounded border @(isChecked ? "border-primary bg-light" : "border-light")"
+                                     style="cursor:pointer;" id="card-@room.Id">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="selectedRoomIds"
+                                           value="@room.Id"
+                                           id="room-@room.Id"
+                                           @(isChecked ? "checked" : "")
+                                           onchange="toggleCard(@room.Id)" />
+                                    <label class="form-check-label w-100" for="room-@room.Id" style="cursor:pointer;">
+                                        <div class="fw-bold small" style="color:var(--nrl-navy);">
+                                            <i class="fa-solid fa-door-open me-1"></i>@room.Name
+                                        </div>
+                                        <div class="text-muted" style="font-size:0.75rem;">
+                                            <i class="fa-solid fa-location-dot me-1"></i>@room.BuildingLocation
+                                        </div>
+                                        <div class="mt-1" style="font-size:0.72rem;">
+                                            <span class="badge bg-light text-dark border me-1">
+                                                <i class="fa-solid fa-users me-1"></i>@room.Capacity seats
+                                            </span>
+                                            @if (room.HasProjector)
+                                            {
+                                                <span class="badge bg-light text-dark border me-1">Projector</span>
+                                            }
+                                            @if (room.HasVideoConferencing)
+                                            {
+                                                <span class="badge bg-light text-dark border me-1">VC</span>
+                                            }
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div class="small text-muted">
+                            <span id="selectedCount">@assignedIds.Count</span> hall(s) selected
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAll(false)">
+                                Clear All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll(true)">
+                                Select All
+                            </button>
+                            <button type="submit" class="btn btn-nrl-primary px-4">
+                                <i class="fa-solid fa-floppy-disk me-1"></i>Save Assignments
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function toggleCard(roomId) {
+        const cb = document.getElementById('room-' + roomId);
+        const card = document.getElementById('card-' + roomId);
+        card.classList.toggle('border-primary', cb.checked);
+        card.classList.toggle('bg-light', cb.checked);
+        card.classList.toggle('border-light', !cb.checked);
+        updateCount();
+    }
+
+    function selectAll(state) {
+        document.querySelectorAll('input[name="selectedRoomIds"]').forEach(cb => {
+            cb.checked = state;
+            const card = document.getElementById('card-' + cb.value);
+            card.classList.toggle('border-primary', state);
+            card.classList.toggle('bg-light', state);
+            card.classList.toggle('border-light', !state);
+        });
+        updateCount();
+    }
+
+    function updateCount() {
+        const count = document.querySelectorAll('input[name="selectedRoomIds"]:checked').length;
+        document.getElementById('selectedCount').textContent = count;
+    }
+</script>

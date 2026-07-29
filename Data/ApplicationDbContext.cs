@@ -25,6 +25,7 @@ namespace RefineryBooking.Data
         public DbSet<ITFacilityRequirement> ITFacilityRequirements { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<HallBlock> HallBlocks { get; set; } = null!;
+        public DbSet<AllocatorHallAssignment> AllocatorHallAssignments { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -54,6 +55,25 @@ namespace RefineryBooking.Data
                 .WithMany()
                 .HasForeignKey(h => h.CreatedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // AllocatorHallAssignment → Allocator (no cascade)
+            builder.Entity<AllocatorHallAssignment>()
+                .HasOne(a => a.Allocator)
+                .WithMany()
+                .HasForeignKey(a => a.AllocatorUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // AllocatorHallAssignment → ConferenceRoom
+            builder.Entity<AllocatorHallAssignment>()
+                .HasOne(a => a.ConferenceRoom)
+                .WithMany()
+                .HasForeignKey(a => a.ConferenceRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique: one allocator cannot be assigned to the same hall twice
+            builder.Entity<AllocatorHallAssignment>()
+                .HasIndex(a => new { a.AllocatorUserId, a.ConferenceRoomId })
+                .IsUnique();
 
             // --- SEED ROLES ---
             var adminRoleId = "11111111-1111-1111-1111-111111111111";

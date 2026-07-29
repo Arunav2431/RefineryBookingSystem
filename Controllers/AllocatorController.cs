@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RefineryBooking.Data;
 using RefineryBooking.Models;
 using ClosedXML.Excel;
+using System.Security.Claims;
 
 namespace RefineryBooking.Controllers
 {
@@ -14,11 +15,37 @@ namespace RefineryBooking.Controllers
         private readonly ApplicationDbContext _context;
         public AllocatorController(ApplicationDbContext context) => _context = context;
 
+        // ── Helper: get room IDs assigned to the current allocator ────────────────
+        // Admins bypass hall scoping and see all bookings.
+        private async Task<List<int>?> GetAssignedRoomIdsAsync()
+        {
+            if (User.IsInRole("Admin")) return null; // null = no filter (all halls)
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return await _context.AllocatorHallAssignments
+                .Where(a => a.AllocatorUserId == userId)
+                .Select(a => a.ConferenceRoomId)
+                .ToListAsync();
+        }
+
         // ── TABBED INDEX ─────────────────────────────────────────────────────
         // tab: "review" (default for Allocator) | "pending" | "approved" | "rejected" | "all"
         public async Task<IActionResult> Index(string tab = "review")
         {
             ViewBag.ActiveTab = tab;
+
+            var assignedRoomIds = await GetAssignedRoomIdsAsync();
+
+            // Warn allocator if they have no halls assigned yet
+            if (assignedRoomIds != null && assignedRoomIds.Count == 0)
+            {
+                ViewBag.NoHallsAssigned = true;
+                ViewBag.CountReview   = 0;
+                ViewBag.CountPending  = 0;
+                ViewBag.CountApproved = 0;
+                ViewBag.CountRejected = 0;
+                return View(new List<Booking>());
+            }
 
             var query = _context.Bookings
                 .Include(b => b.ConferenceRoom)
@@ -26,7 +53,10 @@ namespace RefineryBooking.Controllers
                 .Include(b => b.ITRequirement)
                 .AsQueryable();
 
-            // Allocators only see bookings delegated to them unless Admin
+            // Scope to assigned halls (null = Admin, sees all)
+            if (assignedRoomIds != null)
+                query = query.Where(b => assignedRoomIds.Contains(b.ConferenceRoomId));
+
             IQueryable<Booking> filtered = tab switch
             {
                 "pending"  => query.Where(b => b.Status == BookingStatus.Pending),
@@ -38,11 +68,15 @@ namespace RefineryBooking.Controllers
 
             var bookings = await filtered.OrderBy(b => b.StartTime).ToListAsync();
 
-            // Tab counts for badges
-            ViewBag.CountReview   = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.PendingAllocatorReview);
-            ViewBag.CountPending  = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.Pending);
-            ViewBag.CountApproved = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.Approved);
-            ViewBag.CountRejected = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.Rejected);
+            // Tab counts scoped to assigned halls
+            var scopedBase = assignedRoomIds != null
+                ? _context.Bookings.Where(b => assignedRoomIds.Contains(b.ConferenceRoomId))
+                : _context.Bookings;
+
+            ViewBag.CountReview   = await scopedBase.CountAsync(b => b.Status == BookingStatus.PendingAllocatorReview);
+            ViewBag.CountPending  = await scopedBase.CountAsync(b => b.Status == BookingStatus.Pending);
+            ViewBag.CountApproved = await scopedBase.CountAsync(b => b.Status == BookingStatus.Approved);
+            ViewBag.CountRejected = await scopedBase.CountAsync(b => b.Status == BookingStatus.Rejected);
 
             return View(bookings);
         }
@@ -57,6 +91,11 @@ namespace RefineryBooking.Controllers
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (booking == null) return NotFound();
+
+            // Verify allocator is assigned to this booking's hall
+            var assignedRoomIds = await GetAssignedRoomIdsAsync();
+            if (assignedRoomIds != null && !assignedRoomIds.Contains(booking.ConferenceRoomId))
+                return Forbid();
 
             // Check for conflicts
             ViewBag.HasConflict = await _context.Bookings.AnyAsync(b =>
@@ -75,6 +114,11 @@ namespace RefineryBooking.Controllers
         {
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
+
+            // Verify allocator is assigned to this hall
+            var assignedRoomIds = await GetAssignedRoomIdsAsync();
+            if (assignedRoomIds != null && !assignedRoomIds.Contains(booking.ConferenceRoomId))
+                return Forbid();
 
             bool conflict = await _context.Bookings.AnyAsync(b =>
                 b.Id != id &&
@@ -111,6 +155,11 @@ namespace RefineryBooking.Controllers
         {
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
+
+            // Verify allocator is assigned to this hall
+            var assignedRoomIds = await GetAssignedRoomIdsAsync();
+            if (assignedRoomIds != null && !assignedRoomIds.Contains(booking.ConferenceRoomId))
+                return Forbid();
 
             booking.Status = BookingStatus.Rejected;
             booking.RejectionReason = string.IsNullOrWhiteSpace(reason) ? "Not specified by Allocator." : reason;
@@ -159,10 +208,16 @@ namespace RefineryBooking.Controllers
         [HttpGet]
         public async Task<IActionResult> Export(string tab = "all")
         {
+            var assignedRoomIds = await GetAssignedRoomIdsAsync();
+
             var query = _context.Bookings
                 .Include(b => b.ConferenceRoom)
                 .Include(b => b.User)
                 .AsQueryable();
+
+            // Scope to assigned halls
+            if (assignedRoomIds != null)
+                query = query.Where(b => assignedRoomIds.Contains(b.ConferenceRoomId));
 
             IQueryable<Booking> filtered = tab switch
             {

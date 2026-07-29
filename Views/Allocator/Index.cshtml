@@ -21,6 +21,21 @@
     </div>
 </div>
 
+@if (ViewBag.NoHallsAssigned == true)
+{
+    <div class="alert alert-warning d-flex gap-3 align-items-start mb-4" style="border-left:4px solid #e6a817;">
+        <i class="fa-solid fa-triangle-exclamation fa-lg mt-1 text-warning"></i>
+        <div>
+            <strong>No halls assigned to you yet.</strong><br />
+            <span class="small text-muted">
+                You have not been assigned to any conference halls. Please contact an <strong>Admin</strong>
+                to assign you to the halls you are responsible for.<br />
+                <em>Admin Panel → Users → (your name) → <i class="fa-solid fa-building-lock"></i> Halls</em>
+            </span>
+        </div>
+    </div>
+}
+
 <!-- TABS -->
 <ul class="nav nav-tabs border-bottom mb-4" style="border-color:var(--nrl-border)!important;">
     <li class="nav-item">

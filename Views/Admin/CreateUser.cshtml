@@ -1,11 +1,11 @@
 @{
     ViewData["Title"] = "Create System Account";
     var roles = ViewBag.Roles as List<string> ?? new();
-    var depts = ViewBag.Departments as List<string> ?? new();
+    var allRooms = ViewBag.AllRooms as List<RefineryBooking.Models.ConferenceRoom> ?? new();
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-md-7">
         <div class="card card-industrial">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold" style="color:var(--nrl-navy);">
@@ -28,13 +28,15 @@
                     </div>
                 </div>
 
-                <form asp-action="CreateUser" method="post">
-                    @Html.AntiForgeryToken()
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Full Name *</label>
-                        <input type="text" name="fullName" class="form-control" placeholder="e.g. Ramesh Chandra Sharma" required />
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger py-2 small">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
                     </div>
+                }
+
+                <form asp-action="CreateUser" method="post" id="createUserForm">
+                    @Html.AntiForgeryToken()
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Windows Username *</label>
@@ -48,7 +50,8 @@
                                    title="Use the employee's Windows/domain login username (e.g. john.doe)" />
                         </div>
                         <div class="form-text text-muted" style="font-size:0.75rem;">
-                            The employee's company computer login username (e.g. <code>john.doe</code>)
+                            The employee's company computer login username (e.g. <code>john.doe</code>).
+                            Full Name &amp; Department are fetched automatically from the company server.
                         </div>
                     </div>
 
@@ -58,32 +61,60 @@
                             <input type="text" name="employeeBadgeId" class="form-control" placeholder="e.g. NRL-1042" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Department *</label>
-                            <select name="department" class="form-select" required>
-                                <option value="">Select Department...</option>
-                                @foreach (var d in depts)
+                            <label class="form-label fw-bold">System Role *</label>
+                            <select name="role" id="roleSelect" class="form-select" required onchange="toggleHallSection()">
+                                @foreach (var r in roles)
                                 {
-                                    <option value="@d">@d</option>
+                                    <option value="@r">
+                                        @(r == "Admin" ? "Admin — Full system administration" :
+                                          r == "Allocator" ? "Allocator — Manages & approves room bookings" :
+                                          r == "ITFM" ? "ITFM — Prepares AV/IT equipment for meetings" : r)
+                                    </option>
                                 }
                             </select>
+                            <div class="form-text text-muted" style="font-size:0.75rem;">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                "User" is not listed — regular employees log in automatically.
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">System Role *</label>
-                        <select name="role" class="form-select" required>
-                            @foreach (var r in roles)
+                    @* Hall Assignment — required only for Allocator *@
+                    <div id="hallSection" class="mb-4 p-3 rounded border"
+                         style="background:#f8fafc; display:none;">
+                        <label class="form-label fw-bold mb-2">
+                            <i class="fa-solid fa-building-lock me-1 text-primary"></i>
+                            Assign Conference Halls <span class="text-danger">*</span>
+                        </label>
+                        <div class="form-text text-muted mb-3" style="font-size:0.78rem;">
+                            An Allocator <strong>must be assigned to at least one hall</strong>.
+                            They will only see and approve bookings for their assigned halls.
+                        </div>
+                        <div class="row g-2">
+                            @foreach (var room in allRooms)
                             {
-                                <option value="@r">
-                                    @(r == "Admin" ? "Admin — Full system administration" :
-                                      r == "Allocator" ? "Allocator — Manages & approves room bookings" :
-                                      r == "ITFM" ? "ITFM — Prepares AV/IT equipment for meetings" : r)
-                                </option>
+                                <div class="col-md-6">
+                                    <div class="form-check p-2 rounded border border-light" id="hcard-@room.Id">
+                                        <input class="form-check-input hall-checkbox"
+                                               type="checkbox"
+                                               name="selectedRoomIds"
+                                               value="@room.Id"
+                                               id="hroom-@room.Id"
+                                               onchange="toggleHallCard(@room.Id)" />
+                                        <label class="form-check-label w-100 small" for="hroom-@room.Id" style="cursor:pointer;">
+                                            <div class="fw-bold" style="color:var(--nrl-navy);">@room.Name</div>
+                                            <div class="text-muted" style="font-size:0.72rem;">
+                                                <i class="fa-solid fa-location-dot me-1"></i>@room.BuildingLocation
+                                                &nbsp;|&nbsp;<i class="fa-solid fa-users me-1"></i>@room.Capacity seats
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                             }
-                        </select>
-                        <div class="form-text text-muted" style="font-size:0.75rem;">
-                            <i class="fa-solid fa-circle-info me-1"></i>
-                            "User" role is not listed — regular employees log in automatically via the company network.
+                        </div>
+                        <div id="hallError" class="text-danger small mt-2" style="display:none;">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            Please select at least one hall for an Allocator.
                         </div>
                     </div>
 
@@ -95,7 +126,7 @@
 
                     <div class="d-flex justify-content-end gap-2">
                         <a asp-action="Users" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-nrl-primary px-4">
+                        <button type="submit" class="btn btn-nrl-primary px-4" onclick="return validateForm()">
                             <i class="fa-solid fa-user-check me-1"></i>Create Account
                         </button>
                     </div>
@@ -105,3 +136,34 @@
     </div>
 </div>
 
+<script>
+    function toggleHallSection() {
+        const role = document.getElementById('roleSelect').value;
+        const section = document.getElementById('hallSection');
+        section.style.display = role === 'Allocator' ? 'block' : 'none';
+        document.getElementById('hallError').style.display = 'none';
+    }
+
+    function toggleHallCard(roomId) {
+        const cb = document.getElementById('hroom-' + roomId);
+        const card = document.getElementById('hcard-' + roomId);
+        card.classList.toggle('border-primary', cb.checked);
+        card.classList.toggle('bg-light', cb.checked);
+    }
+
+    function validateForm() {
+        const role = document.getElementById('roleSelect').value;
+        if (role === 'Allocator') {
+            const checked = document.querySelectorAll('.hall-checkbox:checked').length;
+            if (checked === 0) {
+                document.getElementById('hallError').style.display = 'block';
+                document.getElementById('hallSection').scrollIntoView({ behavior: 'smooth' });
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Show hall section on page load if Allocator is pre-selected
+    toggleHallSection();
+</script>
