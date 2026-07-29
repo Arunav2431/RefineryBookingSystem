@@ -202,12 +202,15 @@
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
 
                     <div class="mb-3">
-                        <label class="form-label">Corporate Email Address</label>
+                        <label class="form-label">Windows Username</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light" style="border-radius:2px 0 0 2px;">
-                                <i class="fa-solid fa-envelope text-muted small"></i>
+                                <i class="fa-solid fa-id-card text-muted small"></i>
                             </span>
-                            <input type="email" name="email" class="form-control" placeholder="user@nrl.co.in" required autofocus />
+                            <input type="text" name="userId" class="form-control" placeholder="e.g. john.doe" required autofocus autocomplete="username" />
+                        </div>
+                        <div class="form-text text-muted" style="font-size:0.72rem;margin-top:4px;">
+                            Use your company computer login username
                         </div>
                     </div>
 
@@ -229,13 +232,18 @@
 
                     <div class="test-accounts">
                         <strong style="color:#0b2553;display:block;margin-bottom:6px;">
-                            <i class="fa-solid fa-key me-1"></i> Test Accounts (Password: <code>Refinery2026!</code>)
+                            <i class="fa-solid fa-key me-1"></i> Default System Accounts (Password: <code>Refinery2026!</code>)
                         </strong>
                         <div class="row g-1" style="color:#4a5568;">
-                            <div class="col-6">Admin: <em>admin@refinery.com</em></div>
-                            <div class="col-6">Allocator: <em>allocator@refinery.com</em></div>
-                            <div class="col-6">ITFM: <em>itfm@refinery.com</em></div>
-                            <div class="col-6">User: <em>user@refinery.com</em></div>
+                            <div class="col-6">Admin: <em>sys.admin</em></div>
+                            <div class="col-6">Allocator: <em>sarah.jenkins</em></div>
+                            <div class="col-6">ITFM: <em>marcus.vance</em></div>
+                            <div class="col-6">User: <em>dave.miller</em></div>
+                        </div>
+                        <div style="margin-top:8px;font-size:0.7rem;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:6px;">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            Regular employees use their company computer username &amp; password.
+                            Name &amp; department are fetched automatically from the company server.
                         </div>
                     </div>
                 </form>

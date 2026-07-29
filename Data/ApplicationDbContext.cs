@@ -74,56 +74,58 @@ namespace RefineryBooking.Data
             var adminUser = new ApplicationUser
             {
                 Id = "aaaa-aaaa-aaaa-aaaa",
-                UserName = "admin@refinery.com",
-                NormalizedUserName = "ADMIN@REFINERY.COM",
-                Email = "admin@refinery.com",
-                NormalizedEmail = "ADMIN@REFINERY.COM",
+                UserName = "sys.admin",
+                NormalizedUserName = "SYS.ADMIN",
+                Email = "admin@nrl.co.in",
+                NormalizedEmail = "ADMIN@NRL.CO.IN",
                 EmailConfirmed = true,
                 FullName = "System Administrator",
                 Department = "IT Operations",
-                EmployeeBadgeId = "REF-001"
+                EmployeeBadgeId = "NRL-ADM-001"
             };
             adminUser.PasswordHash = hasher.HashPassword(adminUser, "Refinery2026!");
 
             var allocatorUser = new ApplicationUser
             {
                 Id = "bbbb-bbbb-bbbb-bbbb",
-                UserName = "allocator@refinery.com",
-                NormalizedUserName = "ALLOCATOR@REFINERY.COM",
-                Email = "allocator@refinery.com",
-                NormalizedEmail = "ALLOCATOR@REFINERY.COM",
+                UserName = "sarah.jenkins",
+                NormalizedUserName = "SARAH.JENKINS",
+                Email = "sarah.jenkins@nrl.co.in",
+                NormalizedEmail = "SARAH.JENKINS@NRL.CO.IN",
                 EmailConfirmed = true,
-                FullName = "Sarah Jenkins (Logistics)",
+                FullName = "Sarah Jenkins",
                 Department = "Facility Scheduling",
-                EmployeeBadgeId = "REF-042"
+                EmployeeBadgeId = "NRL-042"
             };
             allocatorUser.PasswordHash = hasher.HashPassword(allocatorUser, "Refinery2026!");
 
             var itfmUser = new ApplicationUser
             {
                 Id = "cccc-cccc-cccc-cccc",
-                UserName = "itfm@refinery.com",
-                NormalizedUserName = "ITFM@REFINERY.COM",
-                Email = "itfm@refinery.com",
-                NormalizedEmail = "ITFM@REFINERY.COM",
+                UserName = "marcus.vance",
+                NormalizedUserName = "MARCUS.VANCE",
+                Email = "marcus.vance@nrl.co.in",
+                NormalizedEmail = "MARCUS.VANCE@NRL.CO.IN",
                 EmailConfirmed = true,
-                FullName = "Marcus Vance (AV Lead)",
+                FullName = "Marcus Vance",
                 Department = "IT & Facilities",
-                EmployeeBadgeId = "REF-108"
+                EmployeeBadgeId = "NRL-108"
             };
             itfmUser.PasswordHash = hasher.HashPassword(itfmUser, "Refinery2026!");
 
+            // Default general user — regular employees are auto-provisioned on first
+            // login via CompanyAuthService (their name & dept come from the company server).
             var generalUser = new ApplicationUser
             {
                 Id = "dddd-dddd-dddd-dddd",
-                UserName = "user@refinery.com",
-                NormalizedUserName = "USER@REFINERY.COM",
-                Email = "user@refinery.com",
-                NormalizedEmail = "USER@REFINERY.COM",
+                UserName = "dave.miller",
+                NormalizedUserName = "DAVE.MILLER",
+                Email = "dave.miller@nrl.co.in",
+                NormalizedEmail = "DAVE.MILLER@NRL.CO.IN",
                 EmailConfirmed = true,
-                FullName = "Dave Miller (Engineer)",
+                FullName = "Dave Miller",
                 Department = "Catalytic Cracking Unit",
-                EmployeeBadgeId = "REF-504"
+                EmployeeBadgeId = "NRL-504"
             };
             generalUser.PasswordHash = hasher.HashPassword(generalUser, "Refinery2026!");
 

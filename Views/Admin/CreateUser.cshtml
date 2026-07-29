@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Create User";
+    ViewData["Title"] = "Create System Account";
     var roles = ViewBag.Roles as List<string> ?? new();
     var depts = ViewBag.Departments as List<string> ?? new();
 }
@@ -9,13 +9,25 @@
         <div class="card card-industrial">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold" style="color:var(--nrl-navy);">
-                    <i class="fa-solid fa-user-plus me-2"></i>Create System Account
+                    <i class="fa-solid fa-user-gear me-2"></i>Create System Role Account
                 </h5>
                 <a asp-action="Users" class="btn btn-sm btn-outline-secondary">
                     <i class="fa-solid fa-arrow-left me-1"></i>Back to Users
                 </a>
             </div>
             <div class="card-body p-4">
+
+                @* Info banner *@
+                <div class="alert alert-info d-flex gap-2 py-2 small mb-4" style="border-left:3px solid #0b2553;border-radius:2px;">
+                    <i class="fa-solid fa-circle-info mt-1"></i>
+                    <div>
+                        <strong>For system role accounts only.</strong><br/>
+                        Regular employees (bookers) <strong>do not need to be created here</strong> —
+                        they log in automatically using their <strong>company computer username &amp; password</strong>.
+                        Their name and department are pulled from the company server on first login.
+                    </div>
+                </div>
+
                 <form asp-action="CreateUser" method="post">
                     @Html.AntiForgeryToken()
 
@@ -25,14 +37,25 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Corporate Email *</label>
-                        <input type="email" name="email" class="form-control" placeholder="username@nrl.co.in" required />
+                        <label class="form-label fw-bold">Windows Username *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light" style="border-radius:2px 0 0 2px;">
+                                <i class="fa-solid fa-id-card text-muted small"></i>
+                            </span>
+                            <input type="text" name="windowsUsername" class="form-control"
+                                   placeholder="e.g. ramesh.sharma" required
+                                   pattern="[a-zA-Z0-9.\-_]+"
+                                   title="Use the employee's Windows/domain login username (e.g. john.doe)" />
+                        </div>
+                        <div class="form-text text-muted" style="font-size:0.75rem;">
+                            The employee's company computer login username (e.g. <code>john.doe</code>)
+                        </div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Employee Badge ID</label>
-                            <input type="text" name="employeeBadgeId" class="form-control" placeholder="e.g. REF-1042" />
+                            <input type="text" name="employeeBadgeId" class="form-control" placeholder="e.g. NRL-1042" />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Department *</label>
@@ -49,17 +72,25 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">System Role *</label>
                         <select name="role" class="form-select" required>
-                            <option value="User">User — Standard room booking requester</option>
-                            <option value="Allocator">Allocator — Manages & approves room bookings</option>
-                            <option value="ITFM">ITFM — Prepares AV/IT equipment for meetings</option>
-                            <option value="Admin">Admin — Full system administration</option>
+                            @foreach (var r in roles)
+                            {
+                                <option value="@r">
+                                    @(r == "Admin" ? "Admin — Full system administration" :
+                                      r == "Allocator" ? "Allocator — Manages & approves room bookings" :
+                                      r == "ITFM" ? "ITFM — Prepares AV/IT equipment for meetings" : r)
+                                </option>
+                            }
                         </select>
+                        <div class="form-text text-muted" style="font-size:0.75rem;">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            "User" role is not listed — regular employees log in automatically via the company network.
+                        </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">Initial Password *</label>
                         <input type="password" name="password" class="form-control" placeholder="••••••••••••" required />
-                        <span class="text-muted small">Must be at least 6 characters with upper/lowercase and digit/special char.</span>
+                        <span class="text-muted small">Min. 8 characters with uppercase, digit and special character.</span>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">
@@ -73,3 +104,4 @@
         </div>
     </div>
 </div>
+

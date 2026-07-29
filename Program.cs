@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RefineryBooking.Data;
 using RefineryBooking.Models;
+using RefineryBooking.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,9 +19,14 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
     options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequireUppercase = true;
+    // Allow any character in username (Windows domain usernames like john.doe)
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// Register Company Auth Service (LDAP / REST / DB stub)
+builder.Services.AddScoped<ICompanyAuthService, CompanyAuthService>();
 
 builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Account/Login";

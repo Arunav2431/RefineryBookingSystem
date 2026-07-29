@@ -1,0 +1,417 @@
+﻿=======================================================================
+  REFINERY CONFERENCE HALL BOOKING SYSTEM
+  Complete File Reference & System Guide
+  Numaligarh Refinery Limited (NRL)
+=======================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 1 - ALL PROJECT FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+-- ROOT --
+  Program.cs
+    Entry point. Configures services (DB, Identity, CompanyAuthService,
+    cookie auth), middleware pipeline, and starts the web server.
+
+  RefineryBooking.csproj
+    Project config. Lists all NuGet package dependencies.
+
+  appsettings.json
+    Production config: database connection string, logging.
+
+  appsettings.Development.json
+    Development overrides (detailed error logging).
+
+  Role_Descriptions.md
+    Human-readable description of each role and its responsibilities.
+
+  SYSTEM_REFERENCE.txt  [this file]
+    Complete system guide: file listing, auth flow, company integration.
+
+  ROLE_FLOWCHARTS.md
+    Flowcharts for all 4 roles showing their workflow in the system.
+
+  nrl-og-logo.png
+    NRL brand logo used in header and login page.
+
+  libman.json
+    Client-side library manager (Bootstrap, Font Awesome, jQuery).
+
+
+-- CONTROLLERS/ --
+  Controllers/AccountController.cs
+    Feature: Authentication
+    - Login  -> Windows username + password, two-step auth
+                (local Identity first, then CompanyAuthService)
+                Auto-provisions user on first company-server login.
+                Refreshes FullName + Department on every login.
+    - Logout -> Signs out and redirects to login page.
+    - AccessDenied -> Shown when user lacks permission.
+
+  Controllers/AdminController.cs
+    Feature: Admin Panel
+    - Users()           -> List all system users and their roles
+    - CreateUser()      -> Create Admin, ITFM, or Allocator accounts
+                           (regular User accounts are auto-created)
+    - ChangeRole()      -> Change an existing user's role
+    - DeactivateUser()  -> Lock out a user account
+    - ReactivateUser()  -> Re-enable a locked account
+    - BookingHistory()  -> View all bookings (searchable, paginated)
+    - CancelBooking()   -> Force-cancel any active booking
+
+  Controllers/AllocatorController.cs
+    Feature: Booking Approval Workflow
+    - Index()    -> Dashboard: pending bookings needing review
+    - Details()  -> Full booking detail with approve/reject form
+    - Approve()  -> Approve booking; auto-creates IT ticket if needed
+    - Reject()   -> Reject booking with a written reason
+
+  Controllers/BookingController.cs
+    Feature: Conference Room Booking (User-facing)
+    - Index()    -> My Bookings list for the logged-in user
+    - Calendar() -> Visual calendar of room availability by date
+    - Create()   -> Booking form: room, date/time, purpose, attendees,
+                    IT/AV requirements. Conflict detection included.
+    - Cancel()   -> User cancels their own upcoming booking
+
+  Controllers/HallBlockController.cs
+    Feature: Hall Blocking (Admin & Allocator)
+    - Index()  -> List all active hall blocks
+    - Create() -> Block a room for maintenance/event period
+    - Delete() -> Remove an existing block
+
+  Controllers/HomeController.cs
+    Feature: Landing Page & Help
+    - Index()    -> Main dashboard (content adapts per role)
+    - Helpdesk() -> IT/support helpdesk information page
+    - Privacy()  -> Privacy policy page
+    - Error()    -> Generic error display
+
+  Controllers/ITFMController.cs
+    Feature: IT & Facilities Management
+    - Index()        -> ITFM dashboard: bookings with IT requirements
+    - MarkReady()    -> Confirm AV/IT equipment is prepared
+    - MarkNotReady() -> Flag equipment issue for a booking
+
+
+-- MODELS/ --
+  Models/ApplicationUser.cs
+    Extends Identity IdentityUser with:
+      FullName        -> Pulled from company AD/LDAP on login
+      Department      -> Pulled from company AD/LDAP on login
+      EmployeeBadgeId -> NRL employee badge number
+    UserName = Windows domain username (e.g. john.doe)
+
+  Models/Booking.cs
+    Core booking entity:
+      ConferenceRoomId, UserId (foreign keys)
+      StartTime, EndTime
+      Purpose, ExpectedAttendees
+      Status: Pending / PendingAllocatorReview /
+              Approved / Rejected / Cancelled / Completed
+      RejectionReason
+      HelpDeskTicketNumber
+      ITRequirement (linked IT/AV needs)
+
+  Models/ConferenceRoom.cs
+    Conference room master data:
+      Name, BuildingLocation, Capacity
+      HasProjector, HasVideoConferencing, HasWhiteboard
+      IsActive (admin can disable a room)
+
+  Models/ITFacilityRequirement.cs
+    IT/AV requirements for a booking:
+      NeedsLaptop, NeedsProjector, NeedsVideoConferencing
+      NeedsMicrophone, NeedsRecording
+      SpecialInstructions
+      IsReadyConfirmedByITFM
+
+  Models/HallBlock.cs
+    Blocks a room for a date range:
+      ConferenceRoomId, StartTime, EndTime
+      Reason (e.g. "Annual Maintenance")
+      CreatedByUserId
+
+  Models/AuditLog.cs
+    Audit trail for all significant actions:
+      UserId, UserName, Action, EntityName, EntityId
+      Details, Timestamp
+
+  Models/Enums.cs
+    BookingStatus enum:
+      Pending, PendingAllocatorReview, Approved,
+      Rejected, Cancelled, Completed
+
+  Models/ErrorViewModel.cs
+    Error display model for the Error page.
+
+
+-- DATA/ --
+  Data/ApplicationDbContext.cs
+    EF Core database context. Defines all DB tables, relationships,
+    indexes, and seed data:
+      Roles:  Admin, Allocator, ITFM, User
+      Users:  sys.admin, sarah.jenkins, marcus.vance, dave.miller
+      Rooms:  10 pre-seeded NRL conference rooms
+
+
+-- SERVICES/ --
+  Services/CompanyAuthService.cs
+    Company Server Authentication Bridge.
+    Interface: ICompanyAuthService
+    Method: ValidateAndGetProfileAsync(userId, password)
+      Returns: CompanyUserProfile { EmployeeId, FullName,
+                                    Department, Email }
+      or null if credentials are wrong.
+    Status: STUB (returns null - only seeded accounts work)
+    To activate: implement LDAP/REST/DB in the TODO block.
+    Full instructions are in the file's header comments.
+
+
+-- MIGRATIONS/ --
+  Migrations/20260725063801_InitialRefinerySchema.cs
+    Created all tables with initial seed data.
+
+  Migrations/20260725185604_EnhanceBookingFields.cs
+    Added booking fields (attendees, purpose, IT requirements).
+
+  Migrations/20260725191919_AddHallBlocksAndHelpFields.cs
+    Added HallBlocks table and helpdesk fields.
+
+  Migrations/20260729152032_UseWindowsUsernameLogin.cs
+    LATEST: Changed seed user UserNames from emails to Windows
+    domain usernames (sys.admin, sarah.jenkins, etc.)
+
+
+-- VIEWS/ --
+  Views/Account/Login.cshtml
+    Login page with Windows Username + Password fields.
+
+  Views/Admin/UserList.cshtml
+    Admin panel: all users table with role management buttons.
+
+  Views/Admin/CreateUser.cshtml
+    Form to create Admin, ITFM, or Allocator accounts.
+    Uses Windows Username field (no email).
+
+  Views/Admin/BookingHistory.cshtml
+    Full booking history with search and pagination. Admin can
+    cancel any active booking.
+
+  Views/Allocator/Index.cshtml
+    Allocator dashboard: pending bookings queue.
+
+  Views/Allocator/Details.cshtml
+    Full booking detail with Approve / Reject form.
+
+  Views/Booking/Index.cshtml
+    "My Bookings" list for logged-in user.
+
+  Views/Booking/Calendar.cshtml
+    Visual calendar: room availability across dates.
+
+  Views/Booking/Create.cshtml
+    Multi-step booking form (room + date/time + IT requirements).
+    Has real-time conflict checking.
+
+  Views/HallBlock/Index.cshtml
+    List of all active room blocks.
+
+  Views/HallBlock/Create.cshtml
+    Form to block a room for a maintenance/event period.
+
+  Views/Home/Index.cshtml
+    Main dashboard. Adapts content based on the user's role.
+
+  Views/Home/Helpdesk.cshtml
+    IT support / helpdesk contact information.
+
+  Views/Home/Privacy.cshtml
+    Privacy policy page.
+
+  Views/ITFM/Index.cshtml
+    ITFM dashboard: approved bookings with IT requirements.
+    "Mark Ready" buttons for each booking.
+
+  Views/ITFM/Details.cshtml
+    ITFM detail view: full IT requirement checklist for a booking.
+
+  Views/Shared/_Layout.cshtml
+    Master layout applied to all pages. NRL header, nav (role-aware),
+    footer.
+
+  Views/Shared/Error.cshtml
+    Generic error display page.
+
+  Views/Shared/_ValidationScriptsPartial.cshtml
+    jQuery Validation scripts included in all forms.
+
+  Views/_ViewImports.cshtml
+    Global Razor imports: tag helpers and namespaces.
+
+  Views/_ViewStart.cshtml
+    Sets default layout to _Layout.cshtml.
+
+
+-- WWWROOT/ (Static Files) --
+  wwwroot/css/site.css
+    Main stylesheet: NRL brand colors, card styles, header, nav,
+    status badge colors, responsive tweaks.
+
+  wwwroot/js/
+    Custom JS: calendar logic, conflict checking, form validation.
+
+  wwwroot/images/nrl-og-logo.png
+    NRL logo used throughout the UI.
+
+  wwwroot/lib/
+    Third-party libraries: Bootstrap 5, Font Awesome 6, jQuery.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 2 - HOW AUTHENTICATION WORKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT THE USER SEES ON THE LOGIN PAGE:
+  Field 1: Windows Username  (e.g. john.doe - same as their PC login)
+  Field 2: Password          (same as their office computer password)
+
+HOW IT WORKS - TWO-STEP PROCESS:
+
+  User enters username + password and clicks Sign In
+           |
+           v
+  [STEP 1] Check LOCAL Identity database
+           Covers: sys.admin, sarah.jenkins, marcus.vance, dave.miller
+                   and any accounts created via Admin panel
+           |
+           +---> Password matches? --YES--> User is signed in. DONE.
+           |
+           +---> Not found / wrong password?
+           |
+           v
+  [STEP 2] Ask CompanyAuthService.ValidateAndGetProfileAsync()
+           -> Sends username + password to company server (AD/LDAP)
+           -> If valid: receives { FullName, Department, Email }
+                        from the company directory
+           |
+           +---> Company auth failed? --> Show "Invalid credentials"
+           |
+           +---> Company auth OK?
+                 |
+                 +---> First time this user logs in?
+                       YES -> Auto-create account in local DB:
+                                UserName   = windows username
+                                FullName   = from company server [automatic]
+                                Department = from company server [automatic]
+                                Role       = "User" (standard employee)
+                       NO  -> Refresh FullName + Department from server
+                              (keeps data in sync with company directory)
+                 |
+                 v
+                 User is signed in. DONE.
+
+
+CURRENT STATUS (STUB MODE):
+  CompanyAuthService returns null (not yet connected).
+  Only the 4 seeded accounts can log in:
+    sys.admin      password: Refinery2026!  (Admin)
+    sarah.jenkins  password: Refinery2026!  (Allocator)
+    marcus.vance   password: Refinery2026!  (ITFM)
+    dave.miller    password: Refinery2026!  (User)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 3 - HOW TO CONNECT TO THE COMPANY SERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open file: Services/CompanyAuthService.cs
+Find:      ValidateAndGetProfileAsync() method - the TODO block
+Replace:   The "return null" with one of these three options:
+
+
+OPTION A - WINDOWS ACTIVE DIRECTORY / LDAP [Recommended for NRL]
+  1. Install package:
+       dotnet add package Novell.Directory.Ldap.NETStandard
+
+  2. Add to appsettings.json:
+       "CompanyServer": {
+         "LdapHost": "192.168.1.10",    <- your AD server IP
+         "LdapPort": 389,
+         "BaseDn": "DC=nrl,DC=co,DC=in"
+       }
+
+  3. Replace TODO block with:
+       var conn = new LdapConnection();
+       conn.Connect(host, port);
+       conn.Bind(userId + "@nrl.co.in", password);
+       var results = conn.Search(baseDn, ...);
+       var entry = results.Next();
+       return new CompanyUserProfile {
+           EmployeeId = userId,
+           FullName   = entry.GetAttribute("cn").StringValue,
+           Department = entry.GetAttribute("department").StringValue,
+           Email      = entry.GetAttribute("mail").StringValue
+       };
+
+  The Bind() call throws an exception if credentials are wrong.
+  On success, the LDAP entry gives you Full Name, Dept, Email.
+
+
+OPTION B - COMPANY HR REST API
+  Use if your IT team exposes an internal HR portal API endpoint.
+  1. No extra package needed.
+  2. Add to appsettings.json:
+       "CompanyServer": {
+         "AuthApiUrl": "https://hrportal.nrl.co.in/api/auth/verify",
+         "ApiKey": "YOUR_KEY"
+       }
+  3. POST credentials to the API, read FullName/Dept from response.
+
+
+OPTION C - DIRECT HR DATABASE QUERY
+  Use if the HR SQL Server/Oracle database is accessible on the LAN.
+  1. Add connection string for HR DB in appsettings.json.
+  2. Query EMPLOYEE table:
+       SELECT FULL_NAME, DEPT_NAME, EMAIL FROM EMPLOYEE
+       WHERE EMP_USER_ID = @userId
+         AND PASSWORD_HASH = HASHBYTES('SHA2_256', @password)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 4 - HOW ADMIN CREATES NEW ADMIN / ITFM / ALLOCATOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Email is no longer used for login. Use the Windows Username instead.
+
+STEP 1: Log in as sys.admin  (password: Refinery2026!)
+STEP 2: Click "Admin Panel" in the navigation bar
+STEP 3: Click "Users" then click "Create System Account"
+STEP 4: Fill in the form:
+          Full Name        -> Employee's full name
+                             e.g. Ramesh Chandra Sharma
+          Windows Username -> Their company PC login username
+                             e.g. ramesh.sharma  OR  r.sharma
+                             (get this from the IT/AD team)
+          Employee Badge ID-> NRL badge number (e.g. NRL-1042)
+          Department       -> Select from dropdown
+          System Role      -> Admin, ITFM, or Allocator
+                             (User is not shown - auto-created on login)
+          Initial Password -> Set a temporary strong password
+                             e.g. NRL@Temp2026!
+                             Tell the person to change it on first login.
+STEP 5: Click "Create Account"
+
+The person can now log in using their Windows Username + the password
+you just set. No email involved anywhere.
+
+NOTE: Regular employees (User role) never need manual creation.
+      They simply log in with Windows username + office password.
+      Name and Department are fetched from the company server
+      automatically on their first login.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  END OF DOCUMENT
+  NRL Conference Hall Booking System
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -41,55 +41,72 @@ namespace RefineryBooking.Controllers
         // ── CREATE USER GET ──────────────────────────────────────────────────
         public IActionResult CreateUser()
         {
-            ViewBag.Roles = new List<string> { "User", "Allocator", "ITFM", "Admin" };
+            // Admin can only create system-role accounts (Admin, ITFM, Allocator).
+            // Regular employees (User role) log in automatically using their
+            // company network credentials — no manual creation needed.
+            ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
             ViewBag.Departments = GetDepartments();
             return View();
         }
 
         // ── CREATE USER POST ─────────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateUser(string fullName, string email,
-            string employeeBadgeId, string department, string role, string password)
+        public async Task<IActionResult> CreateUser(string windowsUsername,
+            string employeeBadgeId, string role, string password)
         {
-            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(role))
+            // Only allow system roles — not regular "User" role
+            var allowedRoles = new[] { "Admin", "ITFM", "Allocator" };
+
+            if (string.IsNullOrWhiteSpace(windowsUsername) ||
+                string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(role) ||
+                !allowedRoles.Contains(role))
             {
-                TempData["ErrorMessage"] = "All required fields must be filled.";
-                ViewBag.Roles = new List<string> { "User", "Allocator", "ITFM", "Admin" };
-                ViewBag.Departments = GetDepartments();
+                TempData["ErrorMessage"] = "Windows Username, Password, and a valid Role are required.";
+                ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
                 return View();
             }
 
-            var existingUser = await _userManager.FindByEmailAsync(email);
+            var existingUser = await _userManager.FindByNameAsync(windowsUsername);
             if (existingUser != null)
             {
-                TempData["ErrorMessage"] = $"A user with email '{email}' already exists.";
-                ViewBag.Roles = new List<string> { "User", "Allocator", "ITFM", "Admin" };
-                ViewBag.Departments = GetDepartments();
+                TempData["ErrorMessage"] = $"A user with username '{windowsUsername}' already exists.";
+                ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
                 return View();
             }
+
+            // ── Fetch Full Name & Department from company server ────────────────────────
+            // Uses a read-only LDAP service account — no employee password needed.
+            // Falls back to a placeholder if company server is not yet connected.
+            var companyProfile = await _companyAuth.GetProfileAsync(windowsUsername);
+            var fullName   = companyProfile?.FullName   ?? $"({windowsUsername} — pending company sync)";
+            var department = companyProfile?.Department ?? "(Pending company sync)";
+            var email      = companyProfile?.Email      ?? $"{windowsUsername}@nrl.co.in";
 
             var user = new ApplicationUser
             {
-                UserName = email,
-                Email = email,
-                FullName = fullName,
+                UserName        = windowsUsername,
+                Email           = email,
+                FullName        = fullName,         // ← from company server
+                Department      = department,        // ← from company server
                 EmployeeBadgeId = employeeBadgeId,
-                Department = department,
-                EmailConfirmed = true
+                EmailConfirmed  = true
             };
 
             var result = await _userManager.CreateAsync(user, password);
             if (!result.Succeeded)
             {
                 TempData["ErrorMessage"] = "Error: " + string.Join(", ", result.Errors.Select(e => e.Description));
-                ViewBag.Roles = new List<string> { "User", "Allocator", "ITFM", "Admin" };
-                ViewBag.Departments = GetDepartments();
+                ViewBag.Roles = new List<string> { "Allocator", "ITFM", "Admin" };
                 return View();
             }
 
             await _userManager.AddToRoleAsync(user, role);
-            TempData["SuccessMessage"] = $"User '{fullName}' ({email}) created successfully with role '{role}'.";
+
+            var profileNote = companyProfile != null
+                ? $"Name '{fullName}', Dept '{department}' fetched from company server."
+                : "Company server not yet connected — name/dept will update on first login.";
+
+            TempData["SuccessMessage"] = $"Account '{windowsUsername}' created with role '{role}'. {profileNote}";
             return RedirectToAction(nameof(Users));
         }
 

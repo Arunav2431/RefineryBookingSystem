@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RefineryBooking.Models;
+using RefineryBooking.Services;
 
 namespace RefineryBooking.Controllers
 {
@@ -9,11 +10,16 @@ namespace RefineryBooking.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ICompanyAuthService _companyAuth;
 
-        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        public AccountController(
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            ICompanyAuthService companyAuth)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _companyAuth = companyAuth;
         }
 
         [HttpGet]
@@ -25,25 +31,79 @@ namespace RefineryBooking.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
+        public async Task<IActionResult> Login(string userId, string password, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
             {
-                ModelState.AddModelError("", "Email and Password are required.");
+                ModelState.AddModelError("", "Username and Password are required.");
                 return View();
             }
 
-            var result = await _signInManager.PasswordSignInAsync(email, password, false, lockoutOnFailure: false);
-            if (result.Succeeded)
-            {
-                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    return Redirect(returnUrl);
+            // ── STEP 1: Try local Identity store ────────────────────────────
+            // This covers seeded system accounts: sys.admin, sarah.jenkins, marcus.vance
+            // and any Admin/ITFM/Allocator accounts created by the admin panel.
+            var localResult = await _signInManager.PasswordSignInAsync(
+                userId, password, isPersistent: false, lockoutOnFailure: false);
 
-                return RedirectToAction("Index", "Home");
+            if (localResult.Succeeded)
+                return RedirectToLocal(returnUrl);
+
+            // ── STEP 2: Try company server authentication ────────────────────
+            // Validates credentials against AD/LDAP/HR API.
+            // On success, also returns the employee's Full Name, Department, Email
+            // directly from the company directory — no manual entry needed.
+            var companyProfile = await _companyAuth.ValidateAndGetProfileAsync(userId, password);
+
+            if (companyProfile != null)
+            {
+                // Find or create the user in the local DB
+                var localUser = await _userManager.FindByNameAsync(userId);
+
+                if (localUser == null)
+                {
+                    // ── FIRST LOGIN: Auto-provision the user ─────────────────
+                    // Full Name and Department come from the company server profile.
+                    localUser = new ApplicationUser
+                    {
+                        UserName        = userId,
+                        Email           = companyProfile.Email,
+                        FullName        = companyProfile.FullName,       // ← from company server
+                        Department      = companyProfile.Department,     // ← from company server
+                        EmployeeBadgeId = companyProfile.EmployeeId,
+                        EmailConfirmed  = true
+                    };
+
+                    // Create user without a local password — auth is delegated to company server
+                    var createResult = await _userManager.CreateAsync(localUser);
+                    if (createResult.Succeeded)
+                    {
+                        await _userManager.AddToRoleAsync(localUser, "User");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Failed to provision account. Contact IT support.");
+                        return View();
+                    }
+                }
+                else
+                {
+                    // ── SUBSEQUENT LOGIN: Refresh profile from company server ──
+                    // Keeps Full Name and Department in sync with company directory.
+                    localUser.FullName   = companyProfile.FullName;
+                    localUser.Department = companyProfile.Department;
+                    if (!string.IsNullOrEmpty(companyProfile.Email))
+                        localUser.Email = companyProfile.Email;
+                    await _userManager.UpdateAsync(localUser);
+                }
+
+                await _signInManager.SignInAsync(localUser, isPersistent: false);
+                return RedirectToLocal(returnUrl);
             }
 
-            ModelState.AddModelError("", "Invalid login attempt. Check your credentials.");
+            // ── Both local and company auth failed ───────────────────────────
+            ModelState.AddModelError("", "Invalid username or password.");
             return View();
         }
 
@@ -57,5 +117,12 @@ namespace RefineryBooking.Controllers
 
         [HttpGet]
         public IActionResult AccessDenied() => View();
+
+        private IActionResult RedirectToLocal(string? returnUrl)
+        {
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+            return RedirectToAction("Index", "Home");
+        }
     }
 }
