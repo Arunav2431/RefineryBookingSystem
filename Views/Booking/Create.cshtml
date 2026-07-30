@@ -1,4 +1,4 @@
-@model RefineryBooking.Models.Booking
+﻿@model RefineryBooking.Models.Booking
 @{
     ViewData["Title"] = "Request Room Booking";
 }
@@ -12,7 +12,7 @@
             <div>
                 <span class="fw-bold fs-6">Booking Reference</span><br />
                 <span class="text-warning fw-bold">BKG-AUTO</span>
-                <span class="text-white-50 small ms-2">â€” will be assigned automatically upon submission</span>
+                <span class="text-white-50 small ms-2">- will be assigned automatically upon submission</span>
             </div>
         </div>
 
@@ -92,7 +92,8 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold">Booking Date *</label>
                             <input type="date" id="bookingDate" class="form-control"
-                                   min="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                   min="@DateTime.Now.ToString("yyyy-MM-dd")" required 
+                                   onclick="this.showPicker()" style="cursor: pointer;" />
                         </div>
 
                         <!-- Hidden fields for model binding -->
@@ -250,7 +251,7 @@
                             <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Any special arrangements, access requirements, or notes for the Allocator..."></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Attachment <span class="text-muted small fw-normal">(PDF, Word, Excel, Images â€” max 5 MB)</span></label>
+                            <label class="form-label fw-semibold">Attachment <span class="text-muted small fw-normal">(PDF, Word, Excel, Images - max 5 MB)</span></label>
                             <input type="file" name="attachment" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" id="attachmentInput" />
                             <div id="filePreview" class="mt-2 text-muted small d-none">
                                 <i class="fa-solid fa-paperclip me-1"></i><span id="fileName"></span>
