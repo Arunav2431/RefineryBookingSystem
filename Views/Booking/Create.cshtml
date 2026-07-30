@@ -415,15 +415,47 @@
                 });
             }
 
+            // Refresh room dropdown when date changes to reflect hall blocks
+            function refreshRoomDropdown() {
+                var d = $('#bookingDate').val();
+                if (!d) return;
+                var currentRoom = $('#roomSelect').val();
+                $.getJSON('@Url.Action("GetAvailableRoomsForDate", "Booking")', { date: d }, function (rooms) {
+                    var sel = $('#roomSelect');
+                    sel.empty();
+                    sel.append($('<option>').val('').text('-- Select Conference Hall --'));
+                    $.each(rooms, function (i, r) {
+                        var opt = $('<option>').val(r.id);
+                        if (r.isBlocked) {
+                            opt.text(r.name + ' \u2014 \u26d4 ' + r.blockReason);
+                            opt.prop('disabled', true);
+                            opt.css('color', '#c0392b');
+                        } else {
+                            opt.text(r.name);
+                        }
+                        if (r.id == currentRoom && !r.isBlocked) {
+                            opt.prop('selected', true);
+                        }
+                        sel.append(opt);
+                    });
+                    checkAvailability();
+                });
+            }
+
             // Any date/time control change triggers a sync + check
-            $('#bookingDate, #startHour, #startMin, #startAmPm,
-               #endHour,     #endMin,   #endAmPm').on('change', checkAvailability);
+            $('#bookingDate').on('change', function () {
+                refreshRoomDropdown();
+                checkAvailability();
+            });
+            $('#startHour, #startMin, #startAmPm,
+               #endHour,   #endMin,   #endAmPm').on('change', checkAvailability);
 
             $('#roomSelect').on('change', checkAvailability);
             $('#btnCheckConflict').click(checkAvailability);
 
-            // Initialise hidden fields on page load with defaults
+            // Initialise on page load
             syncAll();
+            refreshRoomDropdown();
         });
 
         function toggleHelp(divId, show) {

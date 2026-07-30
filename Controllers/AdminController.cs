@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -468,6 +468,75 @@ namespace RefineryBooking.Controllers
             "IT", "Finance", "HR", "Logistics", "Quality Control",
             "Admin & Corporate Affairs", "Security", "Planning"
         };
+
+        // ── COST CENTRES ──────────────────────────────────────────────────────
+        public async Task<IActionResult> CostCentres()
+        {
+            var list = await _context.CostCentres.OrderBy(c => c.Code).ToListAsync();
+            return View(list);
+        }
+
+        public IActionResult AddCostCentre() => View();
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddCostCentre(CostCentre model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            if (await _context.CostCentres.AnyAsync(c => c.Code == model.Code))
+            {
+                ModelState.AddModelError("Code", "A Cost Centre with this code already exists.");
+                return View(model);
+            }
+
+            _context.CostCentres.Add(model);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Cost Centre '{model.Code} – {model.Name}' added.";
+            return RedirectToAction(nameof(CostCentres));
+        }
+
+        public async Task<IActionResult> EditCostCentre(int id)
+        {
+            var cc = await _context.CostCentres.FindAsync(id);
+            if (cc == null) return NotFound();
+            return View(cc);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCostCentre(int id, CostCentre model)
+        {
+            if (id != model.Id) return NotFound();
+            if (!ModelState.IsValid) return View(model);
+
+            if (await _context.CostCentres.AnyAsync(c => c.Id != id && c.Code == model.Code))
+            {
+                ModelState.AddModelError("Code", "Another Cost Centre already uses this code.");
+                return View(model);
+            }
+
+            var cc = await _context.CostCentres.FindAsync(id);
+            if (cc == null) return NotFound();
+
+            cc.Code        = model.Code;
+            cc.Name        = model.Name;
+            cc.Description = model.Description;
+            cc.IsActive    = model.IsActive;
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Cost Centre '{cc.Code}' updated.";
+            return RedirectToAction(nameof(CostCentres));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleCostCentre(int id)
+        {
+            var cc = await _context.CostCentres.FindAsync(id);
+            if (cc == null) return NotFound();
+            cc.IsActive = !cc.IsActive;
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Cost Centre '{cc.Code}' is now {(cc.IsActive ? "Active" : "Inactive")}.";
+            return RedirectToAction(nameof(CostCentres));
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-﻿// File: Controllers/BookingController.cs
+// File: Controllers/BookingController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +16,6 @@ namespace RefineryBooking.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _env;
-
-
 
         public BookingController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env)
         {
@@ -43,7 +41,7 @@ namespace RefineryBooking.Controllers
         public async Task<IActionResult> Create(int? roomId, string? date)
         {
             ViewBag.Rooms = new SelectList(await _context.ConferenceRooms.Where(r => r.IsActive).ToListAsync(), "Id", "Name", roomId);
-                        var activeCostCentres = await _context.CostCentres.Where(c => c.IsActive).OrderBy(c => c.Name).Select(c => new { Code = c.Code, Display = c.Code + " - " + c.Name }).ToListAsync();
+            var activeCostCentres = await _context.CostCentres.Where(c => c.IsActive).OrderBy(c => c.Name).Select(c => new { Code = c.Code, Display = c.Code + " - " + c.Name }).ToListAsync();
             ViewBag.CostCentres = new SelectList(activeCostCentres, "Code", "Display");
 
             var model = new Booking();
@@ -89,12 +87,12 @@ namespace RefineryBooking.Controllers
             ModelState.Remove("itReq.Booking");
             ModelState.Remove("itReq.BookingId");
 
-            // 3. Working Hours Validation (09:30 â€“ 17:30)
+            // 3. Working Hours Validation (09:30 – 17:30)
             var workStart = booking.StartTime.Date.AddHours(9).AddMinutes(30);
             var workEnd = booking.StartTime.Date.AddHours(17).AddMinutes(30);
             if (booking.StartTime < workStart || booking.EndTime > workEnd)
             {
-                ModelState.AddModelError("", "Bookings must be within working hours: 09:30 â€“ 17:30.");
+                ModelState.AddModelError("", "Bookings must be within working hours: 09:30 \u2013 17:30.");
             }
 
             // 4. Time range validation
@@ -131,7 +129,7 @@ namespace RefineryBooking.Controllers
 
             if (hallBlock != null)
             {
-                ModelState.AddModelError("", $"'{hallBlock.ConferenceRoom?.Name}' is unavailable on {hallBlock.BlockedDate:dd MMM yyyy} due to: {hallBlock.Reason} â€” {hallBlock.Notes}");
+                ModelState.AddModelError("", $"'{hallBlock.ConferenceRoom?.Name}' is unavailable on {hallBlock.BlockedDate:dd MMM yyyy} due to: {hallBlock.Reason} \u2013 {hallBlock.Notes}");
             }
 
             // 6. Handle file attachment upload
@@ -182,7 +180,7 @@ namespace RefineryBooking.Controllers
                 });
 
                 await _context.SaveChangesAsync();
-                
+
                 if (booking.Status == BookingStatus.Approved)
                 {
                     TempData["SuccessMessage"] = $"Booking BKG-{booking.Id} submitted and automatically APPROVED.";
@@ -191,14 +189,14 @@ namespace RefineryBooking.Controllers
                 {
                     TempData["SuccessMessage"] = $"Booking request BKG-{booking.Id} submitted successfully! Awaiting Allocator review.";
                 }
-                
+
                 return RedirectToAction(nameof(Index));
             }
 
             // Reload dropdowns on validation failure
             ViewBag.Rooms = new SelectList(await _context.ConferenceRooms.Where(r => r.IsActive).ToListAsync(), "Id", "Name", booking.ConferenceRoomId);
-                        var activeCostCentres = await _context.CostCentres.Where(c => c.IsActive).OrderBy(c => c.Name).Select(c => new { Code = c.Code, Display = c.Code + " - " + c.Name }).ToListAsync();
-            ViewBag.CostCentres = new SelectList(activeCostCentres, "Code", "Display", booking.CostCentre);
+            var activeCostCentres2 = await _context.CostCentres.Where(c => c.IsActive).OrderBy(c => c.Name).Select(c => new { Code = c.Code, Display = c.Code + " - " + c.Name }).ToListAsync();
+            ViewBag.CostCentres = new SelectList(activeCostCentres2, "Code", "Display", booking.CostCentre);
             return View(booking);
         }
 
@@ -225,11 +223,44 @@ namespace RefineryBooking.Controllers
                 return Json(new
                 {
                     available = false,
-                    message = $"Conflict with '{conflict.MeetingTitle}' ({conflict.StartTime:HH:mm} â€“ {conflict.EndTime:HH:mm})."
+                    message = $"Conflict with '{conflict.MeetingTitle}' ({conflict.StartTime:HH:mm} \u2013 {conflict.EndTime:HH:mm})."
                 });
             }
 
             return Json(new { available = true, message = "Room is available!" });
+        }
+
+        // Returns all active rooms for a given date.
+        // Blocked rooms are included but flagged with isBlocked=true and the reason,
+        // so the client renders them disabled with a visible reason tooltip.
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableRoomsForDate(string date)
+        {
+            if (!DateTime.TryParse(date, out var day))
+                return Json(new List<object>());
+
+            var rooms = await _context.ConferenceRooms
+                .Where(r => r.IsActive)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+
+            var blockedOnDate = await _context.HallBlocks
+                .Where(h => h.BlockedDate.Date == day.Date)
+                .ToListAsync();
+
+            var result = rooms.Select(r =>
+            {
+                var block = blockedOnDate.FirstOrDefault(h => h.ConferenceRoomId == r.Id);
+                return new
+                {
+                    id          = r.Id,
+                    name        = r.Name,
+                    isBlocked   = block != null,
+                    blockReason = block != null ? $"Blocked \u2014 {block.Reason}: {block.Notes}" : (string?)null
+                };
+            });
+
+            return Json(result);
         }
 
         [HttpGet]
@@ -332,7 +363,7 @@ namespace RefineryBooking.Controllers
                 if (block != null)
                 {
                     slots.Add(new {
-                        hour = $"{slotStart:HH:mm} â€“ {slotEnd:HH:mm}",
+                        hour = $"{slotStart:HH:mm} \u2013 {slotEnd:HH:mm}",
                         status = "Blocked",
                         details = $"Blocked: {block.Reason} ({block.Notes})",
                         isAvailable = false
@@ -344,7 +375,7 @@ namespace RefineryBooking.Controllers
                     if (match != null)
                     {
                         slots.Add(new {
-                            hour = $"{slotStart:HH:mm} â€“ {slotEnd:HH:mm}",
+                            hour = $"{slotStart:HH:mm} \u2013 {slotEnd:HH:mm}",
                             status = match.Status == BookingStatus.Approved ? "Approved" : "Pending",
                             details = $"{match.MeetingTitle} ({match.OrganizerName})",
                             bookingId = match.Id,
@@ -354,7 +385,7 @@ namespace RefineryBooking.Controllers
                     else
                     {
                         slots.Add(new {
-                            hour = $"{slotStart:HH:mm} â€“ {slotEnd:HH:mm}",
+                            hour = $"{slotStart:HH:mm} \u2013 {slotEnd:HH:mm}",
                             status = "Available",
                             details = "Free Slot",
                             isAvailable = true,
@@ -373,6 +404,7 @@ namespace RefineryBooking.Controllers
                 slots
             });
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -409,5 +441,3 @@ namespace RefineryBooking.Controllers
         }
     }
 }
-
-

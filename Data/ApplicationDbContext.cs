@@ -1,4 +1,4 @@
-﻿// File: Data/ApplicationDbContext.cs
+// File: Data/ApplicationDbContext.cs
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -184,6 +184,20 @@ namespace RefineryBooking.Data
                 new ConferenceRoom { Id = 8, HallCode = "CC-1005-MNT-01", OwnerDepartment = "Maintenance",    CostCentreCode = "1005", Name = "Turnaround Planning Room",            BuildingLocation = "Maintenance Bldg",       FloorNumber = "1", Capacity = 20, HasVideoConferencing = false, HasProjector = true,  HasWhiteboard = true,  IsActive = true, CreatedAt = sysTime, CreatedByUserId = adminId },
                 new ConferenceRoom { Id = 9, HallCode = "CC-1006-ITS-01", OwnerDepartment = "IT Services",    CostCentreCode = "1006", Name = "IT & Instrumentation Lab",            BuildingLocation = "IT Services Block",      FloorNumber = "G", Capacity = 10, HasVideoConferencing = true,  HasProjector = false, HasWhiteboard = true,  IsActive = true, CreatedAt = sysTime, CreatedByUserId = adminId },
                 new ConferenceRoom { Id = 10,HallCode = "CC-1007-LOG-01", OwnerDepartment = "Logistics",      CostCentreCode = "1007", Name = "Logistics & Dispatch Conference Room",BuildingLocation = "Warehouse Block B",      FloorNumber = "2", Capacity = 14, HasVideoConferencing = false, HasProjector = true,  HasWhiteboard = true,  IsActive = true, CreatedAt = sysTime, CreatedByUserId = adminId }
+            );
+
+            // --- SEED COST CENTRES ---
+            builder.Entity<CostCentre>().HasData(
+                new CostCentre { Id = 1, Code = "1001", Name = "Administration & Corporate Affairs", Description = "Corporate, executive and administrative operations",           IsActive = true },
+                new CostCentre { Id = 2, Code = "1002", Name = "Operations",                         Description = "Plant operations and production management",                  IsActive = true },
+                new CostCentre { Id = 3, Code = "1003", Name = "Health, Safety & Environment",       Description = "HSE training, compliance and safety audits",                IsActive = true },
+                new CostCentre { Id = 4, Code = "1004", Name = "Engineering",                        Description = "Pipeline, civil and mechanical engineering",                 IsActive = true },
+                new CostCentre { Id = 5, Code = "1005", Name = "Maintenance",                        Description = "Equipment maintenance and turnaround planning",              IsActive = true },
+                new CostCentre { Id = 6, Code = "1006", Name = "IT Services",                        Description = "Information technology and instrumentation",                 IsActive = true },
+                new CostCentre { Id = 7, Code = "1007", Name = "Logistics",                          Description = "Supply chain, dispatch and warehouse management",            IsActive = true },
+                new CostCentre { Id = 8, Code = "1008", Name = "Finance",                            Description = "Financial planning, budgeting and accounting",               IsActive = true },
+                new CostCentre { Id = 9, Code = "1009", Name = "Human Resources",                   Description = "Recruitment, training and employee relations",               IsActive = true },
+                new CostCentre { Id = 10, Code = "1010", Name = "Quality Control",                  Description = "Product quality assurance and laboratory services",           IsActive = true }
             );
         }
     }

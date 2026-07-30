@@ -71,6 +71,23 @@
                                 {
                                     <span class="text-muted small">Standard Room Only</span>
                                 }
+                                @if (item.ITRequirement != null)
+                                {
+                                    <div class="mt-1">
+                                    @switch (item.ITRequirement.SetupStatus)
+                                    {
+                                        case RefineryBooking.Models.TechSetupStatus.Pending:
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" title="IT Facilities Management has been notified and will set up your equipment."><i class="fa-solid fa-gear me-1"></i>IT Setup: Pending</span>
+                                            break;
+                                        case RefineryBooking.Models.TechSetupStatus.Ready:
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" title="All IT equipment has been set up and is ready for your meeting."><i class="fa-solid fa-circle-check me-1"></i>IT Setup: Ready</span>
+                                            break;
+                                        case RefineryBooking.Models.TechSetupStatus.IssueReported:
+                                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25" title="ITFM has reported a setup issue. Please contact IT Facilities."><i class="fa-solid fa-triangle-exclamation me-1"></i>IT Setup: Issue Reported</span>
+                                            break;
+                                    }
+                                    </div>
+                                }
                             </td>
                             <td>
                                 @switch (item.Status)

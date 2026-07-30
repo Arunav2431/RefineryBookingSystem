@@ -97,7 +97,7 @@
                                 <li><a asp-controller="HallBlock" asp-action="Index" class="nav-item @(ViewData["Title"]?.ToString() == "Hall Availability & Blocking" ? "active" : "")">HALL BLOCKING</a></li>
                             }
 
-                            @if (User.IsInRole("ITFM") || User.IsInRole("Admin"))
+                            @if (User.IsInRole("ITFM"))
                             {
                                 <li><a asp-controller="ITFM" asp-action="Index" class="nav-item @(ViewData["Title"]?.ToString()?.Contains("IT") == true ? "active" : "")">IT FACILITIES</a></li>
                             }
@@ -109,6 +109,7 @@
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" asp-controller="Admin" asp-action="Users">ALL USERS</a></li>
                                         <li><a class="dropdown-item" asp-controller="Admin" asp-action="Halls">MANAGE HALLS</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="CostCentres">COST CENTRES</a></li>
                                         <li><a class="dropdown-item" asp-controller="Admin" asp-action="CreateUser">CREATE USER</a></li>
                                     </ul>
                                 </li>
