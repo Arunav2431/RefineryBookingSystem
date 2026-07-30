@@ -1,4 +1,4 @@
-﻿@model RefineryBooking.Models.Booking
+@model RefineryBooking.Models.Booking
 @{
     ViewData["Title"] = "Request Room Booking";
 }
@@ -88,20 +88,92 @@
                             </select>
                             <span asp-validation-for="CostCentre" class="text-danger small"></span>
                         </div>
+                        <!-- Single shared date picker -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Booking Date *</label>
+                            <input type="date" id="bookingDate" class="form-control"
+                                   min="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <!-- Hidden fields for model binding -->
+                        <input type="hidden" asp-for="StartTime" id="startTime" />
+                        <input type="hidden" asp-for="EndTime"   id="endTime" />
+
+                        <!-- Start Time -->
                         <div class="col-md-6">
-                            <label asp-for="StartTime" class="form-label fw-semibold">Start Time *</label>
-                            <input asp-for="StartTime" type="datetime-local" class="form-control time-input" id="startTime" min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                            <label class="form-label fw-semibold">
+                                <i class="fa-regular fa-clock me-1 text-warning"></i>Start Time *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-hourglass-start text-secondary"></i></span>
+                                <select id="startHour" class="form-select" style="max-width:80px;">
+                                    <option value="1">01</option>
+                                    <option value="2">02</option>
+                                    <option value="3">03</option>
+                                    <option value="4">04</option>
+                                    <option value="5">05</option>
+                                    <option value="6">06</option>
+                                    <option value="7">07</option>
+                                    <option value="8">08</option>
+                                    <option value="9" selected>09</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                </select>
+                                <span class="input-group-text px-1 fw-bold">:</span>
+                                <select id="startMin" class="form-select" style="max-width:80px;">
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30" selected>30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select id="startAmPm" class="form-select" style="max-width:85px;">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
                             <span asp-validation-for="StartTime" class="text-danger small"></span>
                         </div>
+
+                        <!-- End Time -->
                         <div class="col-md-6">
-                            <label asp-for="EndTime" class="form-label fw-semibold">End Time *</label>
-                            <input asp-for="EndTime" type="datetime-local" class="form-control time-input" id="endTime" min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                            <label class="form-label fw-semibold">
+                                <i class="fa-regular fa-clock me-1 text-warning"></i>End Time *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-hourglass-end text-secondary"></i></span>
+                                <select id="endHour" class="form-select" style="max-width:80px;">
+                                    <option value="1">01</option>
+                                    <option value="2">02</option>
+                                    <option value="3">03</option>
+                                    <option value="4">04</option>
+                                    <option value="5" selected>05</option>
+                                    <option value="6">06</option>
+                                    <option value="7">07</option>
+                                    <option value="8">08</option>
+                                    <option value="9">09</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                </select>
+                                <span class="input-group-text px-1 fw-bold">:</span>
+                                <select id="endMin" class="form-select" style="max-width:80px;">
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select id="endAmPm" class="form-select" style="max-width:85px;">
+                                    <option value="AM">AM</option>
+                                    <option value="PM" selected>PM</option>
+                                </select>
+                            </div>
                             <span asp-validation-for="EndTime" class="text-danger small"></span>
                         </div>
                         <div class="col-12">
                             <div class="alert alert-info py-2 mb-0 d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-clock text-info"></i>
-                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>09:30 â€“ 17:30</strong>.</span>
+                                <span class="small"><strong>Working Hours:</strong> Bookings are only permitted between <strong>09:30 &ndash; 17:30</strong>.</span>
                                 <span id="slotStatus" class="ms-auto badge bg-secondary">Select times to check</span>
                             </div>
                         </div>
@@ -272,33 +344,60 @@
                 }
             });
 
-            // Working hours visual indicator
-            function checkWorkingHours() {
-                var start = $('#startTime').val();
-                var end = $('#endTime').val();
-                if (!start || !end) return;
+            // Convert 12-hour select values to decimal 24-hour float (e.g. 4 PM + 15 min = 16.25)
+            function selectsToDecimalH(hourId, minId, ampmId) {
+                var h  = parseInt($('#' + hourId).val(), 10);
+                var m  = parseInt($('#' + minId).val(), 10);
+                var ap = $('#' + ampmId).val();
+                if (ap === 'PM' && h !== 12) h += 12;
+                if (ap === 'AM' && h === 12) h = 0;
+                return h + m / 60;
+            }
 
-                var startH = new Date(start).getHours() + new Date(start).getMinutes() / 60;
-                var endH = new Date(end).getHours() + new Date(end).getMinutes() / 60;
-                var badge = $('#slotStatus');
+            // Build "YYYY-MM-DDTHH:mm" from a date input + time selects, store in hidden field
+            function buildHidden(dateId, hourId, minId, ampmId, hiddenId) {
+                var d  = $('#' + dateId).val();
+                if (!d) return;
+                var h  = parseInt($('#' + hourId).val(), 10);
+                var m  = $('#' + minId).val();
+                var ap = $('#' + ampmId).val();
+                if (ap === 'PM' && h !== 12) h += 12;
+                if (ap === 'AM' && h === 12) h = 0;
+                var hStr = h.toString().padStart(2, '0');
+                $('#' + hiddenId).val(d + 'T' + hStr + ':' + m);
+            }
+
+            function syncAll() {
+                buildHidden('bookingDate', 'startHour', 'startMin', 'startAmPm', 'startTime');
+                buildHidden('bookingDate', 'endHour',   'endMin',   'endAmPm',   'endTime');
+            }
+
+            // Working hours indicator — reads directly from selects, no Date() timezone issues
+            function checkWorkingHours() {
+                var d = $('#bookingDate').val();
+                if (!d) return;
+
+                var startH = selectsToDecimalH('startHour', 'startMin', 'startAmPm');
+                var endH   = selectsToDecimalH('endHour',   'endMin',   'endAmPm');
+                var badge  = $('#slotStatus');
 
                 if (startH < 9.5 || endH > 17.5) {
-                    badge.removeClass('bg-secondary bg-success').addClass('bg-danger').text('Outside working hours!');
+                    badge.removeClass('bg-secondary bg-success bg-warning text-dark').addClass('bg-danger').text('Outside working hours!');
                 } else if (startH >= endH) {
-                    badge.removeClass('bg-secondary bg-success').addClass('bg-warning text-dark').text('Invalid time range');
+                    badge.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning text-dark').text('Invalid time range');
                 } else {
-                    badge.removeClass('bg-secondary bg-danger bg-warning text-dark').addClass('bg-success').text('Within working hours âœ“');
+                    badge.removeClass('bg-secondary bg-danger bg-warning text-dark').addClass('bg-success').text('Within working hours ✔');
                 }
             }
 
             // Availability check
             function checkAvailability() {
-                var roomId = $('#roomSelect').val();
-                var start = $('#startTime').val();
-                var end = $('#endTime').val();
-
+                syncAll();
                 checkWorkingHours();
 
+                var roomId = $('#roomSelect').val();
+                var start  = $('#startTime').val();
+                var end    = $('#endTime').val();
                 if (!roomId || !start || !end) return;
 
                 $('#conflictAlert').addClass('d-none');
@@ -316,8 +415,15 @@
                 });
             }
 
-            $('.time-input, #roomSelect').on('change', checkAvailability);
+            // Any date/time control change triggers a sync + check
+            $('#bookingDate, #startHour, #startMin, #startAmPm,
+               #endHour,     #endMin,   #endAmPm').on('change', checkAvailability);
+
+            $('#roomSelect').on('change', checkAvailability);
             $('#btnCheckConflict').click(checkAvailability);
+
+            // Initialise hidden fields on page load with defaults
+            syncAll();
         });
 
         function toggleHelp(divId, show) {
