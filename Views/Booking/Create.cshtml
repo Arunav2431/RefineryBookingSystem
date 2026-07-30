@@ -391,11 +391,20 @@
             }
 
             // Availability check
+            var checkAvailabilityTimeout;
+            var currentAvailabilityRequest = null;
+
             function checkAvailability() {
+                clearTimeout(checkAvailabilityTimeout);
+                checkAvailabilityTimeout = setTimeout(executeCheckAvailability, 300);
+            }
+
+            function executeCheckAvailability() {
                 syncAll();
                 checkWorkingHours();
 
-                var roomId = $('#roomSelect').val();
+                var roomSelectDom = document.getElementById('roomSelect');
+                var roomId = roomSelectDom ? roomSelectDom.value : null;
                 var start  = $('#startTime').val();
                 var end    = $('#endTime').val();
                 if (!roomId || !start || !end) return;
@@ -403,13 +412,18 @@
                 $('#conflictAlert').addClass('d-none');
                 $('#availableAlert').addClass('d-none');
 
-                $.getJSON('@Url.Action("CheckAvailability", "Booking")', { roomId: roomId, start: start, end: end }, function (res) {
+                if (currentAvailabilityRequest) {
+                    currentAvailabilityRequest.abort();
+                }
+
+                currentAvailabilityRequest = $.getJSON('@Url.Action("CheckAvailability", "Booking")', { roomId: roomId, start: start, end: end }, function (res) {
                     if (!res.available) {
-                        $('#conflictMessage').text(res.message);
+                        $('#conflictMessage').html(res.message.replace(/\n/g, '<br/>'));
                         $('#conflictAlert').removeClass('d-none');
                         $('#btnSubmit').prop('disabled', true);
                     } else {
                         $('#availableAlert').removeClass('d-none');
+                        $('#conflictAlert').addClass('d-none');
                         $('#btnSubmit').prop('disabled', false);
                     }
                 });
@@ -419,7 +433,8 @@
             function refreshRoomDropdown() {
                 var d = $('#bookingDate').val();
                 if (!d) return;
-                var currentRoom = $('#roomSelect').val();
+                var rsDom = document.getElementById('roomSelect');
+                var currentRoom = rsDom ? rsDom.value : null;
                 $.getJSON('@Url.Action("GetAvailableRoomsForDate", "Booking")', { date: d }, function (rooms) {
                     var sel = $('#roomSelect');
                     sel.empty();
@@ -433,7 +448,7 @@
                         } else {
                             opt.text(r.name);
                         }
-                        if (r.id == currentRoom && !r.isBlocked) {
+                        if (r.id == currentRoom) {
                             opt.prop('selected', true);
                         }
                         sel.append(opt);

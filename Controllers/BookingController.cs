@@ -107,7 +107,14 @@ namespace RefineryBooking.Controllers
                 ModelState.AddModelError("StartTime", "Cannot book meetings in the past.");
             }
 
-            // 5. Real-time Database Conflict Check
+            // 5. Hall Block Validation
+            bool isBlocked = await _context.HallBlocks.AnyAsync(h => h.ConferenceRoomId == booking.ConferenceRoomId && h.BlockedDate.Date == booking.StartTime.Date);
+            if (isBlocked)
+            {
+                ModelState.AddModelError("", $"Hall is blocked for {booking.StartTime:dd/MM/yyyy}.");
+            }
+
+            // 6. Conflict Validation
             bool isDoubleBooked = await _context.Bookings.AnyAsync(b =>
                 b.ConferenceRoomId == booking.ConferenceRoomId &&
                 b.Status != BookingStatus.Rejected &&
@@ -206,6 +213,18 @@ namespace RefineryBooking.Controllers
         {
             if (start >= end) return Json(new { available = false, message = "Invalid time range." });
 
+            // 1. Hall Block Validation (Highest Priority)
+            var block = await _context.HallBlocks.FirstOrDefaultAsync(h => h.ConferenceRoomId == roomId && h.BlockedDate.Date == start.Date);
+            if (block != null)
+            {
+                return Json(new
+                {
+                    available = false,
+                    message = $"Hall is blocked for {start:dd/MM/yyyy}."
+                });
+            }
+
+            // 2. Booking Conflict Validation
             var query = _context.Bookings.Where(b =>
                 b.ConferenceRoomId == roomId &&
                 b.Status != BookingStatus.Rejected &&
@@ -217,18 +236,18 @@ namespace RefineryBooking.Controllers
             if (excludeBookingId.HasValue)
                 query = query.Where(b => b.Id != excludeBookingId.Value);
 
-            var conflict = await query.Select(b => new { b.MeetingTitle, b.StartTime, b.EndTime }).FirstOrDefaultAsync();
+            var conflict = await query.Select(b => new { b.StartTime, b.EndTime }).FirstOrDefaultAsync();
 
             if (conflict != null)
             {
                 return Json(new
                 {
                     available = false,
-                    message = $"Conflict with '{conflict.MeetingTitle}' ({conflict.StartTime:HH:mm} \u2013 {conflict.EndTime:HH:mm})."
+                    message = $"Hall is already booked from\n{conflict.StartTime:hh:mm tt} to {conflict.EndTime:hh:mm tt}.\n\nPlease select another time frame."
                 });
             }
 
-            return Json(new { available = true, message = "Room is available!" });
+            return Json(new { available = true, message = "\u2713 Room is available for this time slot." });
         }
 
         // Returns all active rooms for a given date.
