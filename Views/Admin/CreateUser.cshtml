@@ -62,7 +62,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">System Role *</label>
-                            <select name="role" id="roleSelect" class="form-select" required onchange="toggleHallSection()">
+                            <select name="role" id="roleSelect" class="form-select searchable-select" required onchange="toggleHallSection()">
                                 @foreach (var r in roles)
                                 {
                                     <option value="@r">
@@ -155,15 +155,5 @@
 </script>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('.select2-halls').select2({
-                placeholder: "Search and select conference halls...",
-                allowClear: true,
-                theme: "default"
-            });
-        });
-    </script>
+    <!-- Select2 loaded globally in _Layout.cshtml -->
 }

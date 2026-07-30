@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="~/lib/fullcalendar/main.min.css" />
     <!-- Site CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -189,6 +191,27 @@
             } catch(e) {}
         });
     </script>
+    
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize generic searchable selects
+            $('.searchable-select').select2({
+                placeholder: "Search and select...",
+                allowClear: true,
+                theme: "default"
+            });
+            
+            // Initialize the multiple allocator selects
+            $('.select2-halls').select2({
+                placeholder: "Search and select conference halls...",
+                allowClear: true,
+                theme: "default"
+            });
+        });
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

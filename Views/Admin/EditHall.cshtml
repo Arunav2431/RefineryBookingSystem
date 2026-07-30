@@ -1,4 +1,4 @@
-﻿@model RefineryBooking.Models.ConferenceRoom
+@model RefineryBooking.Models.ConferenceRoom
 @{
     ViewData["Title"] = "Edit Hall";
     var depts = ViewBag.Departments as List<string> ?? new();
@@ -50,7 +50,7 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Owner Department *</label>
-                            <select asp-for="OwnerDepartment" class="form-select" required>
+                            <select asp-for="OwnerDepartment" class="form-select searchable-select" required>
                                 <option value="">Select Department...</option>
                                 @foreach (var d in depts)
                                 {

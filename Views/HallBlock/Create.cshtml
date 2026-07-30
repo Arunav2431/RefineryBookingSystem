@@ -27,7 +27,7 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Select Conference Hall *</label>
-                        <select name="conferenceRoomId" class="form-select" required>
+                        <select name="conferenceRoomId" class="form-select searchable-select" required>
                             <option value="">Select Hall...</option>
                             @foreach (var r in rooms)
                             {
@@ -45,7 +45,7 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Reason for Block *</label>
-                        <select name="reason" class="form-select" required>
+                        <select name="reason" class="form-select searchable-select" required>
                             <option value="Safety">Safety — Mandatory Safety Inspection / HAZMAT Audit</option>
                             <option value="Maintenance">Maintenance — AV Upgrade / Air Conditioning Repair / Painting</option>
                             <option value="Other">Other — Executive Event / Internal Reservation</option>
