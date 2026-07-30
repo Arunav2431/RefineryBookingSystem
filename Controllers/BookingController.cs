@@ -88,9 +88,10 @@ namespace RefineryBooking.Controllers
             ModelState.Remove("itReq.BookingId");
 
             // 3. Working Hours Validation (09:30 – 17:30)
-            var workStart = booking.StartTime.Date.AddHours(9).AddMinutes(30);
-            var workEnd = booking.StartTime.Date.AddHours(17).AddMinutes(30);
-            if (booking.StartTime < workStart || booking.EndTime > workEnd)
+            var startWorkTime = new TimeSpan(9, 30, 0);
+            var endWorkTime = new TimeSpan(17, 30, 0);
+
+            if (booking.StartTime.TimeOfDay < startWorkTime || booking.EndTime.TimeOfDay > endWorkTime)
             {
                 ModelState.AddModelError("", "Bookings must be within working hours: 09:30 \u2013 17:30.");
             }

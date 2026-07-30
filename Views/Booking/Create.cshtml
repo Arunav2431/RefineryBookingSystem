@@ -447,8 +447,7 @@
                 refreshRoomDropdown();
                 checkAvailability();
             });
-            $('#startHour, #startMin, #startAmPm,
-               #endHour,   #endMin,   #endAmPm').on('change', checkAvailability);
+            $('#startHour, #startMin, #startAmPm, #endHour, #endMin, #endAmPm').on('change', checkAvailability);
 
             $('#roomSelect').on('change', checkAvailability);
             $('#btnCheckConflict').click(checkAvailability);
