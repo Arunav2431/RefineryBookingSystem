@@ -316,9 +316,7 @@
                         <a asp-action="Index" class="btn btn-outline-secondary">
                             <i class="fa-solid fa-arrow-left me-1"></i> Cancel
                         </a>
-                        <button type="button" id="btnCheckConflict" class="btn btn-info text-white fw-bold">
-                            <i class="fa-solid fa-rotate me-1"></i> Verify Availability
-                        </button>
+
                         <button type="submit" id="btnSubmit" class="btn btn-amber px-4">
                             <i class="fa-solid fa-paper-plane me-1"></i> Submit Request
                         </button>
@@ -464,7 +462,6 @@
             $('#startHour, #startMin, #startAmPm, #endHour, #endMin, #endAmPm').on('change', checkAvailability);
 
             $('#roomSelect').on('change', checkAvailability);
-            $('#btnCheckConflict').click(checkAvailability);
 
             // Initialise on page load
             syncAll();
