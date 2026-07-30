@@ -443,7 +443,6 @@
                         var opt = $('<option>').val(r.id);
                         if (r.isBlocked) {
                             opt.text(r.name + ' \u2014 \u26d4 ' + r.blockReason);
-                            opt.prop('disabled', true);
                             opt.css('color', '#c0392b');
                         } else {
                             opt.text(r.name);
